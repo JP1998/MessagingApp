@@ -24,7 +24,7 @@ import de.jeanpierrehotz.messagingapptest.R;
 /**
  * Diese Klasse wird genutzt, um die Views für eine Announcement-Nachricht zu speichern
  */
-public class AnnouncementMessageViewHolder extends MessageViewHolder {
+public class AnnouncementMessageViewHolder extends MessageViewHolder{
 
     /**
      * Das TextView, welches die eigentliche Nachricht anzeigt

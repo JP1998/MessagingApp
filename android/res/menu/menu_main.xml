@@ -24,7 +24,7 @@
         android:id="@+id/action_ping"
         android:orderInCategory="101"
         android:icon="@drawable/ic_vector_menu_ping"
-        android:title="Ping Server"
+        android:title="@string/action_pingserver"
         app:showAsAction="always"/>
 
 </menu>

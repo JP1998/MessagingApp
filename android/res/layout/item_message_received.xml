@@ -21,11 +21,9 @@
     android:layout_height="wrap_content"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
     android:paddingStart="@dimen/message_padding_outer_horizontal"
-    android:paddingLeft="@dimen/message_padding_outer_horizontal"
     android:paddingTop="@dimen/message_padding_outer_vertical"
     android:paddingBottom="@dimen/message_padding_outer_vertical"
-    android:paddingEnd="@dimen/message_gap_padding"
-    android:paddingRight="@dimen/message_gap_padding">
+    android:paddingEnd="@dimen/message_gap_padding">
 
     <android.support.v7.widget.CardView
         android:layout_width="wrap_content"
@@ -34,13 +32,11 @@
         card_view:cardElevation="@dimen/message_elevate"
         card_view:cardBackgroundColor="@color/colorReceived"
         card_view:cardCornerRadius="@dimen/message_CornerRound"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true">
+        android:layout_alignParentStart="true">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="mach du mal deine GFS ^^"
             android:id="@+id/messageTextView"/>
 
     </android.support.v7.widget.CardView>

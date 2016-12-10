@@ -22,10 +22,13 @@ import android.widget.TextView;
 import de.jeanpierrehotz.messagingapptest.R;
 
 /**
- *
+ * Diese Klasse wird genutzt, um die Views für eine Sent-Nachricht zu speichern
  */
 public class SentMessageViewHolder extends MessageViewHolder {
 
+    /**
+     * Das TextView, welches die eigentliche Nachricht anzeigt
+     */
     private TextView sentTextView;
 
     public SentMessageViewHolder(View itemView){

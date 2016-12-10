@@ -23,14 +23,16 @@ import android.widget.TextView;
 /**
  * This class may be used to change the colors of a Snackbar easily
  */
-public class ColoredSnackbar {
+public class ColoredSnackbar{
+
     /**
      * This method creates a Snackbar with given background- and font-color.
-     * @param bg the background color that should be applied to the Snackbar
-     * @param v The view used according to {@link Snackbar#make(View, int, int)}
-     * @param id The string id used according to {@link Snackbar#make(View, int, int)}
+     *
+     * @param bg     the background color that should be applied to the Snackbar
+     * @param v      The view used according to {@link Snackbar#make(View, int, int)}
+     * @param id     The string id used according to {@link Snackbar#make(View, int, int)}
      * @param length The length used according to {@link Snackbar#make(View, int, int)}
-     * @param font the font color that should be applied to the Snackbar
+     * @param font   the font color that should be applied to the Snackbar
      * @return the Snackbar with given informations and given background- and font-color
      */
     public static Snackbar make(int bg, View v, int id, int length, int font){
@@ -42,11 +44,12 @@ public class ColoredSnackbar {
 
     /**
      * This method creates a Snackbar with given background- and font-color.
-     * @param bg the background color that should be applied to the Snackbar
-     * @param v The view used according to {@link Snackbar#make(View, CharSequence, int)}
-     * @param text The CharSequence used according to {@link Snackbar#make(View, CharSequence, int)}
+     *
+     * @param bg     the background color that should be applied to the Snackbar
+     * @param v      The view used according to {@link Snackbar#make(View, CharSequence, int)}
+     * @param text   The CharSequence used according to {@link Snackbar#make(View, CharSequence, int)}
      * @param length The length used according to {@link Snackbar#make(View, CharSequence, int)}
-     * @param font the font color that should be applied to the Snackbar
+     * @param font   the font color that should be applied to the Snackbar
      * @return the Snackbar with given informations and given background- and font-color
      */
     public static Snackbar make(int bg, View v, CharSequence text, int length, int font){

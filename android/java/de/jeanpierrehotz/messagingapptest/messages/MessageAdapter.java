@@ -25,12 +25,31 @@ import java.util.ArrayList;
 import de.jeanpierrehotz.messagingapptest.R;
 
 /**
- * Created by Admin on 06.12.2016.
+ * Diese Klasse kann genutzt werden, um eine Liste von {@link Message}-Ojekten in einem RecyclerView darzustelleV
  */
 public class MessageAdapter extends RecyclerView.Adapter<MessageViewHolder> {
 
+    /**
+     * Die Liste der Nachrichten, die angezeigt werden sollen
+     */
     private ArrayList<Message> data;
 
+    /**
+     * Dieser Konstruktor erstellt einen MessageAdapter, der die gegebene Liste als Datensatz benutzt.<br>
+     * Damit die Referenz zum Datensatz nicht verloren geht dürfen sie keine neue Liste erstellen:
+     * <pre><code>
+        ArrayList&lt;Message&gt; messages = <span style="color: #000080;">new</span> ArrayList&lt;&gt;();
+        <span style="color: #808080;">// [...]</span>
+        MessageAdapter adapter = <span style="color: #000080;">new</span> MessageAdapter(messages);
+        <span style="color: #808080;">// [...]</span>
+        <span style="color: #808080;">// Don't do this!</span>
+        messages = <span style="color: #000080;">new</span> ArrayList&lt;&gt;();
+
+        <span style="color: #808080;">// Do this instead:</span>
+        messages.clear();
+     * </code></pre>
+     * @param data der Datensatz, der genutzt werden soll; Referenz kann nicht geändert werden
+     */
     public MessageAdapter(ArrayList<Message> data) {
         this.data = data;
     }

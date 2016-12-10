@@ -15,6 +15,23 @@
   -->
 
 <resources>
-    <string name="app_name">MessagingAppTest</string>
-    <string name="action_settings">Settings</string>
+
+    <string name="app_name">Messaging</string>
+
+    <string name="message_sendTextField_hint">Type your message</string>
+
+    <string name="action_pingserver">Ping Server</string>
+
+    <string name="pingresult_connected">Connection to the server is established.</string>
+    <string name="pingresult_timedout">The connection to the server has timed out.</string>
+
+    <string name="internetmessage_reconnect">We\'re back! Internet connection restored.</string>
+    <string name="internetmessage_disconnect">No internet connection… bummer.</string>
+    <string name="internetmessage_offline">Unfortunately we\'re currently offline.</string>
+
+    <string name="dateannouncement_template">EEEE dd. MMMM yyyy</string>
+
+    <string name="serverinfo_url">verelpi.ddns.net</string>
+    <integer name="serverinfo_port">1234</integer>
+
 </resources>

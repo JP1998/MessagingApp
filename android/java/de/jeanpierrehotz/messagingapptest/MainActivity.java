@@ -20,6 +20,7 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkRequest;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -36,7 +37,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 
 import de.jeanpierrehotz.messagingapptest.funuistuff.ColoredSnackbar;
 import de.jeanpierrehotz.messagingapptest.messages.Message;
@@ -88,19 +91,19 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onConnectionDetected(boolean connected){
 //          Wir zeigen dem User, ob der Ping erfolgreich war
-            if(connected) {
+            if(connected){
                 ColoredSnackbar.make(
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionRestored),
                         mMessagesView,
-                        "Connection to the server is established.",
+                        getString(R.string.pingresult_connected),
                         Snackbar.LENGTH_SHORT,
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionFont)
                 ).show();
-            } else {
+            }else{
                 ColoredSnackbar.make(
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionLost),
                         mMessagesView,
-                        "The connection to the server has timed out.",
+                        getString(R.string.pingresult_timedout),
                         Snackbar.LENGTH_SHORT,
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionFont)
                 ).show();
@@ -123,18 +126,6 @@ public class MainActivity extends AppCompatActivity{
 //          (= Message.Type.Received) wurde
             addMessage(msg, Message.Type.Received);
         }
-
-        @Override
-        public void onPing(final boolean success){
-            runOnUiThread(new Runnable(){
-                @Override
-                public void run(){
-//                  sobald vom ClientMessageListener der Ping zurück gegeben wird geben wir dem ClientMessageSender Bescheid,
-//                  dass der Ping erfolgreich war (oder eben nicht)
-                    clientMessageSender.onPingReceived(success);
-                }
-            });
-        }
     };
     /**
      * Dieser ClosingDetector frägt ab, ob der ClientMessageListener aufhören soll auf Nachrichten zu hören.
@@ -156,16 +147,16 @@ public class MainActivity extends AppCompatActivity{
      * Dieses Callback soll uns so schnell wie möglich und automatisch wieder mit dem
      * Server verbinden.
      */
-    private ConnectivityManager.NetworkCallback internetCallback = new ConnectivityManager.NetworkCallback() {
+    private ConnectivityManager.NetworkCallback internetCallback = new ConnectivityManager.NetworkCallback(){
         @Override
         public void onAvailable(Network network){
             super.onAvailable(network);
 
-            if(!online) {
+            if(!online){
                 ColoredSnackbar.make(
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionRestored),
                         mMessagesView,
-                        "We're back! Internet connection restored.",
+                        getString(R.string.internetmessage_reconnect),
                         Snackbar.LENGTH_SHORT,
                         ContextCompat.getColor(MainActivity.this, R.color.colorConnectionFont)
                 ).show();
@@ -180,7 +171,7 @@ public class MainActivity extends AppCompatActivity{
             ColoredSnackbar.make(
                     ContextCompat.getColor(MainActivity.this, R.color.colorConnectionLost),
                     mMessagesView,
-                    "No internet connection... bummer.",
+                    getString(R.string.internetmessage_disconnect),
                     Snackbar.LENGTH_SHORT,
                     ContextCompat.getColor(MainActivity.this, R.color.colorConnectionFont)
             ).show();
@@ -221,10 +212,10 @@ public class MainActivity extends AppCompatActivity{
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
-        if(isConnectionAvailable()) {
+        if(isConnectionAvailable()){
             online = true;
             connectToServer();
-        } else {
+        }else{
             online = false;
         }
 
@@ -241,10 +232,10 @@ public class MainActivity extends AppCompatActivity{
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
-        if(isConnectionAvailable()) {
+        if(isConnectionAvailable()){
             online = true;
             connectToServer();
-        } else {
+        }else{
             online = false;
         }
 
@@ -257,13 +248,14 @@ public class MainActivity extends AppCompatActivity{
 
     /**
      * Diese Methode ermittelt, ob derzeit Internet verfügbar ist.
+     *
      * @return ob Internet verfügbar ist
      */
-    private boolean isConnectionAvailable() {
+    private boolean isConnectionAvailable(){
         ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         Network[] networks = manager.getAllNetworks();
-        for(Network net : networks) {
-            if(manager.getNetworkInfo(net).isAvailable()) {
+        for(Network net : networks){
+            if(manager.getNetworkInfo(net).isAvailable()){
                 return true;
             }
         }
@@ -273,14 +265,14 @@ public class MainActivity extends AppCompatActivity{
     /**
      * Diese Methode baut eine Verbindung zum Server auf, von dem wir die Nachrichten bekommen
      */
-    private void connectToServer() {
+    private void connectToServer(){
 //      Initialisierung der Serververbindung auf einem eigenen Thread, da Android
 //      keine Netzwerkkommunikation auf dem MainThread erlaubt
         new Thread(new Runnable(){
             @Override
             public void run(){
-                try {
-                    client = new Socket("verelpi.ddns.net", 1234);
+                try{
+                    client = new Socket(getString(R.string.serverinfo_url), getResources().getInteger(R.integer.serverinfo_port));
 
                     clientMessageSender = new ClientMessageSender(new DataOutputStream(client.getOutputStream()));
                     clientMessageSender.setPingListener(pingListener);
@@ -288,10 +280,11 @@ public class MainActivity extends AppCompatActivity{
                     clientMessageListener = new ClientMessageListener(new DataInputStream(client.getInputStream()));
                     clientMessageListener.setClosingDetector(closingDetector);
                     clientMessageListener.setOnMessageReceivedListener(receivedListener);
+                    clientMessageListener.bindMessageSender(clientMessageSender);
                     clientMessageListener.start();
 
                     online = true;
-                } catch(IOException e) {
+                }catch(IOException e){
                     e.printStackTrace();
                     online = false;
                 }
@@ -321,11 +314,30 @@ public class MainActivity extends AppCompatActivity{
      * Diese Methode fügt eine gegebene Nachricht des gegebenen Typs zu der Liste hinzu, zeigt diese in der Liste an,
      * und lässt das RecyclerView zu dieser Nachricht scrollen.
      *
-     * @param msg   Die Nachricht, die hinzugefügt werden soll
-     * @param type  Der Typ der Nachricht, die hinzugefügt werden soll
+     * @param msg  Die Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
      */
-    private void addMessage(final String msg, final Message.Type type) {
-//      TODO: Evtl. Datum als "Announcement" hinzufügen, falls die letzte Nachricht nicht von heute stammt
+    private void addMessage(final String msg, final Message.Type type){
+//      falls wir kein Announcement anzeigen wollen
+        if(type != Message.Type.Announcement){
+//          und keine Nachricht da ist
+            if(mMessages.size() == 0 || getLastMessage() == null){
+//              fügen wir das heutige Datum definitiv als Announcement hinzu
+                addMessage(new SimpleDateFormat(getString(R.string.dateannouncement_template)).format(Calendar.getInstance().getTime()), Message.Type.Announcement);
+            }else{
+//              falls eine Nachricht da ist, bekommen wir deren Zeit
+                Calendar lastMessageTime = Calendar.getInstance();
+                lastMessageTime.setTimeInMillis(getLastMessage().getTime());
+//              und die derzeitige Systemzeit
+                Calendar currentTime = Calendar.getInstance();
+
+//              und falls diese nicht am selben Tag sind
+                if(notSameDay(lastMessageTime, currentTime)){
+//                  fügen wir das heutige Datum als Announcement hinzu
+                    addMessage(new SimpleDateFormat(getString(R.string.dateannouncement_template)).format(Calendar.getInstance().getTime()), Message.Type.Announcement);
+                }
+            }
+        }
 
 //      Da diese Methode von anderen Threads aufgerufen werden können, wir allerdings auf Views zugreifen
 //      müssen wir das Ganze mit der Methode runOnUiThread(Runnable) ausführen
@@ -343,10 +355,44 @@ public class MainActivity extends AppCompatActivity{
     }
 
     /**
+     * Diese Methode ermittelt, ob zwei Calendar-Objekte eine Zeit an verschiedenen Tagen repräsentieren, oder nicht.
+     * Die Parameter sind beliebig vertauschbar; deren Reihenfolge hat keinen Einfluss auf den
+     *
+     * @param time1 Das erste Calendar-Objekt
+     * @param time2 Das erste Calendar-Ojekt
+     * @return Ob die Calendar-Ojekte verschiedene Tage repräsentieren, oder nicht
+     */
+    private boolean notSameDay(Calendar time1, Calendar time2){
+        return time1.get(Calendar.DAY_OF_MONTH) != time2.get(Calendar.DAY_OF_MONTH)
+                || time1.get(Calendar.MONTH) != time2.get(Calendar.MONTH)
+                || time1.get(Calendar.YEAR) != time2.get(Calendar.YEAR);
+    }
+
+    /**
+     * Diese Methode gibt ihnen die letzte Nachricht, welche nicht vom Typ Announcement ist.
+     * Falls keine solche Nachricht existiert wird {@code null} zurückgegeben.
+     *
+     * @return die letzte Nachricht, welche nicht vom Typ Announcement ist; {@code null}, falls keine existiert
+     */
+    @Nullable
+    private Message getLastMessage(){
+//      wir fangen bei der letzten Nachricht an
+        for(int i = mMessages.size() - 1; i >= 0; i--){
+//          bei der ersten Nachricht, die nicht vom Typ Announcement ist
+            if(mMessages.get(i).getMessageType() != Message.Type.Announcement){
+//              geben wir diese zurück
+                return mMessages.get(i);
+            }
+        }
+//      falls wir keine gefunden haben geben wir null zurück
+        return null;
+    }
+
+    /**
      * Diese Klasse sendet die Nachricht, die momentan im TextFeld steht an den Server, und
      * fügt diese zum Chat hinzu
      */
-    private void sendMessage() {
+    private void sendMessage(){
 //      Wir verhindern leere Nachrichten
         if(!mSendEditText.getText().toString().trim().equals("")){
             if(online){
@@ -360,7 +406,7 @@ public class MainActivity extends AppCompatActivity{
                 addMessage(msg, Message.Type.Sent);
 //              und löschen das TextFeld
                 mSendEditText.setText("");
-            } else {
+            }else{
                 showOfflineErroressage();
             }
         }
@@ -369,10 +415,10 @@ public class MainActivity extends AppCompatActivity{
     /**
      * Diese Methode leitet einen Ping des Servers ein
      */
-    private void pingServer() {
+    private void pingServer(){
         if(online){
             clientMessageSender.pingServer();
-        } else {
+        }else{
             showOfflineErroressage();
         }
     }
@@ -381,11 +427,11 @@ public class MainActivity extends AppCompatActivity{
      * Diese Methode zeigt dem User, dass er gerade offline ist, woraus dieser ableiten
      * können sollte, dass er keine Nachrichten versenden kann.
      */
-    private void showOfflineErroressage() {
+    private void showOfflineErroressage(){
         ColoredSnackbar.make(
                 ContextCompat.getColor(this, R.color.colorConnectionLost),
                 mMessagesView,
-                "Unfortunately we're currently offline.",
+                getString(R.string.internetmessage_offline),
                 Snackbar.LENGTH_SHORT,
                 ContextCompat.getColor(this, R.color.colorConnectionFont)
         ).show();
@@ -413,5 +459,4 @@ public class MainActivity extends AppCompatActivity{
 
         return super.onOptionsItemSelected(item);
     }
-
 }

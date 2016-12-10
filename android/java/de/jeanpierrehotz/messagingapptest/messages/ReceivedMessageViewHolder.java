@@ -22,10 +22,13 @@ import android.widget.TextView;
 import de.jeanpierrehotz.messagingapptest.R;
 
 /**
- * Created by Admin on 06.12.2016.
+ * Diese Klasse wird genutzt, um die Views für eine Received-Nachricht zu speichern
  */
 public class ReceivedMessageViewHolder extends MessageViewHolder {
 
+    /**
+     * Das TextView, welches die eigentliche Nachricht anzeigt
+     */
     private TextView receivedTextView;
 
     public ReceivedMessageViewHolder(View itemView){
