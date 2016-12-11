@@ -37,6 +37,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -144,6 +145,10 @@ public class MainActivity extends AppCompatActivity{
      */
     private boolean online;
     /**
+     * Diese Variable zeigt an, ob der Server erreicht werden konnte, oder nicht
+     */
+    private boolean serverReached;
+    /**
      * Dieses Callback soll uns so schnell wie möglich und automatisch wieder mit dem
      * Server verbinden.
      */
@@ -162,6 +167,7 @@ public class MainActivity extends AppCompatActivity{
                 ).show();
                 connectToServer();
             }
+            online = true;
         }
 
         @Override
@@ -283,10 +289,13 @@ public class MainActivity extends AppCompatActivity{
                     clientMessageListener.bindMessageSender(clientMessageSender);
                     clientMessageListener.start();
 
-                    online = true;
+                    serverReached = true;
+                }catch(SocketException e){
+                    e.printStackTrace();
+                    serverReached = false;
+                    showDisconnectedErrorMessage();
                 }catch(IOException e){
                     e.printStackTrace();
-                    online = false;
                 }
             }
         }).start();
@@ -296,7 +305,7 @@ public class MainActivity extends AppCompatActivity{
     protected void onStop(){
         super.onStop();
 
-        if(online){
+        if(online && serverReached){
             try{
 //              Sobald die Activity endet lassen wir den ClientMessageListener auslaufen, indem wir clientMessageListener auf null setzen,
 //              wodurch closingDetector#isNotToBeClosed(Thread) auf false gesetzt wird
@@ -395,7 +404,7 @@ public class MainActivity extends AppCompatActivity{
     private void sendMessage(){
 //      Wir verhindern leere Nachrichten
         if(!mSendEditText.getText().toString().trim().equals("")){
-            if(online){
+            if(online && serverReached){
 //              bekommen die zu verschickende Nachricht
                 String msg = mSendEditText.getText().toString();
 
@@ -406,8 +415,10 @@ public class MainActivity extends AppCompatActivity{
                 addMessage(msg, Message.Type.Sent);
 //              und löschen das TextFeld
                 mSendEditText.setText("");
+            }else if(online){
+                showDisconnectedErrorMessage();
             }else{
-                showOfflineErroressage();
+                showOfflineErrorMessage();
             }
         }
     }
@@ -416,10 +427,12 @@ public class MainActivity extends AppCompatActivity{
      * Diese Methode leitet einen Ping des Servers ein
      */
     private void pingServer(){
-        if(online){
+        if(online && serverReached){
             clientMessageSender.pingServer();
+        }else if(online){
+            showDisconnectedErrorMessage();
         }else{
-            showOfflineErroressage();
+            showOfflineErrorMessage();
         }
     }
 
@@ -427,7 +440,7 @@ public class MainActivity extends AppCompatActivity{
      * Diese Methode zeigt dem User, dass er gerade offline ist, woraus dieser ableiten
      * können sollte, dass er keine Nachrichten versenden kann.
      */
-    private void showOfflineErroressage(){
+    private void showOfflineErrorMessage(){
         ColoredSnackbar.make(
                 ContextCompat.getColor(this, R.color.colorConnectionLost),
                 mMessagesView,
@@ -435,6 +448,21 @@ public class MainActivity extends AppCompatActivity{
                 Snackbar.LENGTH_SHORT,
                 ContextCompat.getColor(this, R.color.colorConnectionFont)
         ).show();
+    }
+
+    private void showDisconnectedErrorMessage(){
+        ColoredSnackbar.make(
+                ContextCompat.getColor(this, R.color.colorConnectionLost),
+                mMessagesView,
+                getString(R.string.internetmessage_serverdown),
+                Snackbar.LENGTH_SHORT,
+                ContextCompat.getColor(this, R.color.colorConnectionFont)
+        ).setAction(R.string.internetmessage_serverdown_reconnect, new View.OnClickListener(){
+            @Override
+            public void onClick(View view){
+                connectToServer();
+            }
+        }).show();
     }
 
     @Override
