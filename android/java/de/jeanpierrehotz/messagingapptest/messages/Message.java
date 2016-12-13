@@ -16,6 +16,8 @@
 
 package de.jeanpierrehotz.messagingapptest.messages;
 
+import java.util.HashMap;
+
 /**
  * Diese Klasse wird genutzt, um eine Nachricht darzustellen
  */

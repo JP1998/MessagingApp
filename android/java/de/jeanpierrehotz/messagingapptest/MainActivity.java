@@ -25,6 +25,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -32,6 +33,16 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+
+// See gradle dependencies for following classes
+// compile 'com.facebook.rebound:rebound:0.3.8'
+// compile 'com.tumblr:backboard:0.1.0'
+import com.facebook.rebound.Spring;
+import com.facebook.rebound.SpringSystem;
+import com.tumblr.backboard.Actor;
+import com.tumblr.backboard.MotionProperty;
+import com.tumblr.backboard.imitator.SpringImitator;
+import com.tumblr.backboard.performer.Performer;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -230,6 +241,42 @@ public class MainActivity extends AppCompatActivity{
                 new NetworkRequest.Builder().build(),
                 internetCallback
         );
+
+//      Zum Schluss initialisieren wir die Funktion, mit der wir den FloatingActionButton dragbar machen :D
+        buildFollowingFun();
+    }
+
+    /**
+     * Diese Methode erstellt die Funktion, mit der man deL FloatingActionButton draggen
+     * kann, woraufhin die CardView für die Nachricht folgt
+     */
+    private void buildFollowingFun(){
+//      Frag einfach nicht, das ist Copy-Paste aus einem anderen
+//      Projekt von mir, und funktioniert einfach
+        FloatingActionButton fab = mSendBtn;
+        CardView cv = (CardView) findViewById(R.id.sendCardView);
+
+        final SpringSystem springSystem = SpringSystem.create();
+
+        final Spring fabSpringX = springSystem.createSpring();
+        final Spring fabSpringY = springSystem.createSpring();
+
+        new Actor.Builder(springSystem, fab)
+                .addMotion(fabSpringX, MotionProperty.X)
+                .addMotion(fabSpringY, MotionProperty.Y)
+                .build();
+
+        final Spring cvFollowerSpringX = springSystem.createSpring();
+        final Spring cvFollowerSpringY = springSystem.createSpring();
+
+        cvFollowerSpringX.addListener(new Performer(cv, View.TRANSLATION_X));
+        cvFollowerSpringY.addListener(new Performer(cv, View.TRANSLATION_Y));
+
+        final SpringImitator cvImitatorX = new SpringImitator(cvFollowerSpringX);
+        final SpringImitator cvImitatorY = new SpringImitator(cvFollowerSpringY);
+
+        fabSpringX.addListener(cvImitatorX);
+        fabSpringY.addListener(cvImitatorY);
     }
 
     @Override
@@ -450,6 +497,11 @@ public class MainActivity extends AppCompatActivity{
         ).show();
     }
 
+    /**
+     * Diese Methode zeigt dem User, dass er gerade keine Verbindung zu dem Server hat, woraus dieser ableiten
+     * können sollte, dass er keine Nachrichten versenden kann.
+     * Außerdem wird ihm die Möglichkeit geboten zu versuchen sich mit dem Server zu verbinden.
+     */
     private void showDisconnectedErrorMessage(){
         ColoredSnackbar.make(
                 ContextCompat.getColor(this, R.color.colorConnectionLost),
