@@ -24,7 +24,7 @@ public interface ClientConnected{
     /**
      * Die Konstante, welche eine Nachricht von einem User einleitet
      */
-    byte BYTECODE_USERMESSAGE = 1;
+    byte BYTECODE_MESSAGE = 1;
     /**
      * Die Konstante, die eine Servernachricht einleitet
      */

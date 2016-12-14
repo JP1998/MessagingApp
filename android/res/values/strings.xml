@@ -34,6 +34,15 @@
     <string name="dateannouncement_template" translatable="false">EEEE dd. MMMM yyyy</string>
 
     <string name="serverinfo_url" translatable="false">verelpi.ddns.net</string>
+    <string name="action_showsettings"/>
+    <string name="prefs_settings_preference">SharedPreferences prefs = getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE);</string>
+    <string name="prefs_settings_firstLaunch">if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {</string>
+    <string name="defaultUserName">Unknown user</string>
+    <string name="prefs_settings_currentname">currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));</string>
+    <string name="settings_savesettings">Save settings</string>
+    <string name="settings_yourusernamehint">Your username</string>
+    <string name="settingsmessage_invalidusername">This is an invalid username.</string>
+    <string name="settingsBottomSheetCaption">Einstellungen</string>
     <integer name="serverinfo_port">1234</integer>
 
 </resources>

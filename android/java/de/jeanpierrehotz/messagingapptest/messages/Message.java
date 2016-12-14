@@ -16,8 +16,6 @@
 
 package de.jeanpierrehotz.messagingapptest.messages;
 
-import java.util.HashMap;
-
 /**
  * Diese Klasse wird genutzt, um eine Nachricht darzustellen
  */
@@ -55,7 +53,7 @@ public class Message{
      * @param time    Die Zeit, zu der die Nachricht entstand
      * @param msgType Der Typ der Nachricht
      */
-    private Message(String mes, long time, Type msgType){
+    Message(String mes, long time, Type msgType){
         this.mMessage = mes;
         this.mTime = time;
         this.mMessageType = msgType;

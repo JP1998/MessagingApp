@@ -38,8 +38,8 @@ public class AnnouncementMessageViewHolder extends MessageViewHolder{
     }
 
     @Override
-    public void setData(String msg){
-        announcementTextView.setText(msg);
+    public void setData(Message msg){
+        announcementTextView.setText(msg.getMessage());
     }
 
 }

@@ -19,6 +19,9 @@ package de.jeanpierrehotz.messagingapptest.messages;
 import android.view.View;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import de.jeanpierrehotz.messagingapptest.R;
 
 /**
@@ -30,16 +33,25 @@ public class SentMessageViewHolder extends MessageViewHolder {
      * Das TextView, welches die eigentliche Nachricht anzeigt
      */
     private TextView sentTextView;
+    /**
+     * Das TextView, welches die Zeit der Nachricht anzeigt
+     */
+    private TextView timeTextView;
 
     public SentMessageViewHolder(View itemView){
         super(itemView);
 
         sentTextView = (TextView) itemView.findViewById(R.id.messageTextView);
+        timeTextView = (TextView) itemView.findViewById(R.id.message_timeTextView);
     }
 
     @Override
-    public void setData(String msg){
-        sentTextView.setText(msg);
+    public void setData(Message msg){
+        sentTextView.setText(msg.getMessage());
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(msg.getTime());
+        timeTextView.setText(new SimpleDateFormat("HH:mm").format(cal.getTime()));
     }
 
 }

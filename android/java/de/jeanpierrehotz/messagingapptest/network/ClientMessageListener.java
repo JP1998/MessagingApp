@@ -124,12 +124,13 @@ public class ClientMessageListener extends Thread implements ClientConnected{
                     byte readByte = input.readByte();
 
 //                  falls wir den Code für eine Nachricht erhalten
-                    if(readByte == BYTECODE_USERMESSAGE){
+                    if(readByte == BYTECODE_MESSAGE){
 //                      lesen wir diese
+                        String name = input.readUTF();
                         String msg = input.readUTF();
 //                      und feuern ein Event, falls die Nachricht nicht leer ist
-                        if(messageReceivedListener != null && !msg.trim().equals("")){
-                            messageReceivedListener.onMessageReceived(msg);
+                        if(messageReceivedListener != null && !msg.trim().equals("") && !name.trim().equals("")){
+                            messageReceivedListener.onMessageReceived(name, msg);
                         }
                     }
 //                  falls wir den Code für eine Server-Nachricht erhalten
@@ -143,6 +144,16 @@ public class ClientMessageListener extends Thread implements ClientConnected{
                             if(boundMessageSender != null){
 //                              informieren wir dieses, dass eine Antwort auf den Ping angekommen ist
                                 boundMessageSender.onPingReceived(true);
+                            }
+                        }
+//                      falls wir eine Nachricht vom Server bekommen
+                        else if(servermsg == BYTECODE_MESSAGE) {
+//                          lesen wir diese aus
+                            String msg = input.readUTF();
+
+//                          und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
+                            if(messageReceivedListener != null && !msg.trim().equals("")) {
+                                messageReceivedListener.onServerMessageReceived(msg);
                             }
                         }
                     }
@@ -180,9 +191,16 @@ public class ClientMessageListener extends Thread implements ClientConnected{
         /**
          * Diese Methode wird ausgeführt, sobald der ClientMessageListener vom Server die gegebene Nachricht erhält
          *
+         * @param name der Name des Users, der die Nachricht verschickt hat
          * @param msg die Nachricht, die vom Server erhalten wurde
          */
-        void onMessageReceived(String msg);
+        void onMessageReceived(String name, String msg);
+
+        /**
+         * Diese Methode wird ausgeführt, sobald der ClientMessageListener vom Server eine Server-Nachricht bekommt
+         * @param msg Die Server-Nachricht, die empfangen wurde
+         */
+        void onServerMessageReceived(String msg);
     }
 
     /**

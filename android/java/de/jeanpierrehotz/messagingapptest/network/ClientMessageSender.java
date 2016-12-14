@@ -174,8 +174,29 @@ public class ClientMessageSender implements ClientConnected{
             public void run(){
                 try{
 //                  die Nachricht senden, wobei wir davor sagen, dass diese Nachricht für die User ist
-                    sendingStream.writeByte(BYTECODE_USERMESSAGE);
+                    sendingStream.writeByte(BYTECODE_MESSAGE);
                     sendingStream.writeUTF(msg);
+                    sendingStream.flush();
+                }catch(IOException e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+    /**
+     * Diese Methode benachrichtigt den Server, dass der User einen neuen Namen benutzen möchte
+     * @param newName der neue Name,der benutzt werden soll
+     */
+    public void changeName(final String newName) {
+        new Thread(new Runnable(){
+            @Override
+            public void run(){
+                try{
+//                  den Namen senden, wobei wir davor sagen, dass das der neue Name ist
+                    sendingStream.writeByte(BYTECODE_SERVERMESSAGE);
+                    sendingStream.writeByte(BYTECODE_MESSAGE);
+                    sendingStream.writeUTF(newName);
                     sendingStream.flush();
                 }catch(IOException e){
                     e.printStackTrace();

@@ -16,11 +16,13 @@
 
 package de.jeanpierrehotz.messagingapptest;
 
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
@@ -33,6 +35,7 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
 
 // See gradle dependencies for following classes
 // compile 'com.facebook.rebound:rebound:0.3.8'
@@ -56,10 +59,30 @@ import java.util.Calendar;
 import de.jeanpierrehotz.messagingapptest.funuistuff.ColoredSnackbar;
 import de.jeanpierrehotz.messagingapptest.messages.Message;
 import de.jeanpierrehotz.messagingapptest.messages.MessageAdapter;
+import de.jeanpierrehotz.messagingapptest.messages.ReceivedMessage;
 import de.jeanpierrehotz.messagingapptest.network.ClientMessageListener;
 import de.jeanpierrehotz.messagingapptest.network.ClientMessageSender;
 
 public class MainActivity extends AppCompatActivity{
+
+    /**
+     * Das RelativeLayout, das die Einstellungen zeigt
+     */
+    private RelativeLayout settingsBottomSheetLayout;
+    /**
+     * Das BottomSheetBehavior, das die Einstellungen zeigt / versteckt.
+     */
+    private BottomSheetBehavior<RelativeLayout> settingsBottomSheetBehaviour;
+
+    /**
+     * Das EditText, in dem der User seinen UserNamen eingeben kann
+     */
+    private EditText nameTextView;
+    /**
+     * Der derzeitige UserName
+     */
+    private String currentName;
+
 
     /**
      * Die Liste von Nachrichten, die erstmal nur für eine Sitzung gespeichert werden
@@ -133,10 +156,15 @@ public class MainActivity extends AppCompatActivity{
      */
     private ClientMessageListener.OnMessageReceivedListener receivedListener = new ClientMessageListener.OnMessageReceivedListener(){
         @Override
-        public void onMessageReceived(String msg){
+        public void onMessageReceived(String name, String msg){
 //          Die Nachricht wird einfach hinzugefügt, wobei die Nachricht immer empfangen
 //          (= Message.Type.Received) wurde
-            addMessage(msg, Message.Type.Received);
+            addReceivedMessage(name, msg, Message.Type.Received);
+        }
+
+        @Override
+        public void onServerMessageReceived(String msg){
+            addMessage(msg, Message.Type.Announcement);
         }
     };
     /**
@@ -206,6 +234,25 @@ public class MainActivity extends AppCompatActivity{
 //      Initialisierung der Nachrichtenliste
         mMessages = new ArrayList<>();
 //      TODO: Evtl. gespeicherte Nachrichten laden?
+
+//      Initialisierug der Einstellungen
+        settingsBottomSheetLayout = (RelativeLayout) findViewById(R.id.settingsBottomSheet);
+        settingsBottomSheetBehaviour = BottomSheetBehavior.from(settingsBottomSheetLayout);
+
+        nameTextView = (EditText) findViewById(R.id.userNameEditText);
+
+        SharedPreferences prefs = getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE);
+        if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {
+            currentName = getString(R.string.defaultUserName);
+
+            prefs.edit().putBoolean(getString(R.string.prefs_settings_firstLaunch), false).apply();
+            settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+        } else {
+            currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));
+            settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
+        }
+
+        nameTextView.setText(currentName);
 
 //      Intialisierung der UI
         mMessagesView = (RecyclerView) findViewById(R.id.messagesView);
@@ -336,6 +383,8 @@ public class MainActivity extends AppCompatActivity{
                     clientMessageListener.bindMessageSender(clientMessageSender);
                     clientMessageListener.start();
 
+                    clientMessageSender.changeName(currentName);
+
                     serverReached = true;
                 }catch(SocketException e){
                     e.printStackTrace();
@@ -367,13 +416,14 @@ public class MainActivity extends AppCompatActivity{
     }
 
     /**
-     * Diese Methode fügt eine gegebene Nachricht des gegebenen Typs zu der Liste hinzu, zeigt diese in der Liste an,
-     * und lässt das RecyclerView zu dieser Nachricht scrollen.
+     * Diese Methode überprüft, ob wir für eine neue Nachricht des gegebenen Typs eine Datumsanzeige benötigen.
+     * Eine Datumsanzeige ist benötigt, falls der Tag der letzten Nachricht, die keine Announcement-Nachricht ist nicht heute ist,
+     * und der Typ der Nachricht selbst nicht Announcement ist.<br>
+     * Falls die Datumsanzeige benötigt ist, wird diese von dieser Methode hinzugefügt.
      *
-     * @param msg  Die Nachricht, die hinzugefügt werden soll
-     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der hinzuzufügenden Nachricht
      */
-    private void addMessage(final String msg, final Message.Type type){
+    private void testForDateNeeded(Message.Type type) {
 //      falls wir kein Announcement anzeigen wollen
         if(type != Message.Type.Announcement){
 //          und keine Nachricht da ist
@@ -394,6 +444,17 @@ public class MainActivity extends AppCompatActivity{
                 }
             }
         }
+    }
+
+    /**
+     * Diese Methode fügt eine gegebene Nachricht des gegebenen Typs zu der Liste hinzu, zeigt diese in der Liste an,
+     * und lässt das RecyclerView zu dieser Nachricht scrollen.
+     *
+     * @param msg  Die Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
+     */
+    private void addMessage(final String msg, final Message.Type type){
+        testForDateNeeded(type);
 
 //      Da diese Methode von anderen Threads aufgerufen werden können, wir allerdings auf Views zugreifen
 //      müssen wir das Ganze mit der Methode runOnUiThread(Runnable) ausführen
@@ -402,6 +463,32 @@ public class MainActivity extends AppCompatActivity{
             public void run(){
 //              wir fügen die Nachricht zur Liste hinzu
                 mMessages.add(new Message(msg, type));
+//              zeigen es sie im RecyclerView an
+                mMessagesAdapter.notifyItemInserted(mMessages.size() - 1);
+//              und scrollen zu der Nachricht
+                mMessagesView.smoothScrollToPosition(mMessages.size() - 1);
+            }
+        });
+    }
+
+    /**
+     * Diese Methode fügt eine empfangene Nachricht zu der Liste hinzu, zeigt diese in der Liste an,
+     * und lässt das RecyclerView zu dieser Nachricht scrollen.
+     *
+     * @param name Der Name des Users von dem die Nachricht stammt
+     * @param msg  Die Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
+     */
+    private void addReceivedMessage(final String name, final String msg, final Message.Type type){
+        testForDateNeeded(type);
+
+//      Da diese Methode von anderen Threads aufgerufen werden können, wir allerdings auf Views zugreifen
+//      müssen wir das Ganze mit der Methode runOnUiThread(Runnable) ausführen
+        runOnUiThread(new Runnable(){
+            @Override
+            public void run(){
+//              wir fügen die Nachricht zur Liste hinzu
+                mMessages.add(new ReceivedMessage(name, msg, type));
 //              zeigen es sie im RecyclerView an
                 mMessagesAdapter.notifyItemInserted(mMessages.size() - 1);
 //              und scrollen zu der Nachricht
@@ -517,6 +604,53 @@ public class MainActivity extends AppCompatActivity{
         }).show();
     }
 
+    /**
+     * Diese Methode zeigt dem User, dass sein eingegebener Name nicht gültig ist
+     */
+    private void showInvalidUserNameErrorMessage(){
+        ColoredSnackbar.make(
+                ContextCompat.getColor(this, R.color.colorConnectionLost),
+                mMessagesView,
+                getString(R.string.settingsmessage_invalidusername),
+                Snackbar.LENGTH_SHORT,
+                ContextCompat.getColor(this, R.color.colorConnectionFont)
+        ).show();
+    }
+
+    /**
+     * Diese Methode speichert die Einstellungen, und lässt das Einstellungs-Panel verschwinden
+     * @param v das View, das geklickt wurde
+     */
+    public void saveSettings(View v) {
+//      wir bekommen den neuen Namen
+        String newName = nameTextView.getText().toString();
+
+//      verhindern den alten und alle leere Namen
+        if(!newName.trim().equals(currentName) && !newName.trim().equals("")) {
+
+//          übernehmen den neuen Namen, und speichern ihn intern
+            currentName = newName;
+            getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE).edit().putString(getString(R.string.prefs_settings_currentname), currentName).apply();
+
+            if(online) {
+                if(serverReached) {
+//                  falls wir mit dem Server verbunden sind schicken wir den Namen an den Server;
+//                  ansonsten geben wir die entsprechende Fehlermeldung aus
+                    clientMessageSender.changeName(newName);
+                } else {
+                    showDisconnectedErrorMessage();
+                }
+            } else {
+                showOfflineErrorMessage();
+            }
+        } else {
+            showInvalidUserNameErrorMessage();
+        }
+
+//      und lassen das Einstellungs-Panel verschwinden
+        settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
+    }
+
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
 //      Inflate the menu; this adds items to the action bar if it is present.
@@ -535,6 +669,8 @@ public class MainActivity extends AppCompatActivity{
         if(id == R.id.action_ping){
             pingServer();
             return true;
+        } else if(id == R.id.action_settings) {
+            settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
         }
 
         return super.onOptionsItemSelected(item);

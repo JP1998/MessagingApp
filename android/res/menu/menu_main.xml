@@ -25,6 +25,13 @@
         android:orderInCategory="101"
         android:icon="@drawable/ic_vector_menu_ping"
         android:title="@string/action_pingserver"
-        app:showAsAction="always"/>
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="102"
+        android:icon="@drawable/ic_vector_showsettings"
+        android:title="@string/action_showsettings"
+        app:showAsAction="ifRoom"/>
 
 </menu>
