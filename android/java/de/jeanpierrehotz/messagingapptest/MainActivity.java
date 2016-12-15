@@ -31,6 +31,7 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -60,8 +61,8 @@ import de.jeanpierrehotz.messagingapptest.funuistuff.ColoredSnackbar;
 import de.jeanpierrehotz.messagingapptest.messages.Message;
 import de.jeanpierrehotz.messagingapptest.messages.MessageAdapter;
 import de.jeanpierrehotz.messagingapptest.messages.ReceivedMessage;
-import de.jeanpierrehotz.messagingapptest.network.ClientMessageListener;
-import de.jeanpierrehotz.messagingapptest.network.ClientMessageSender;
+import de.jeanpierrehotz.messagingapptest.network.MessageListener;
+import de.jeanpierrehotz.messagingapptest.network.MessageSender;
 
 public class MainActivity extends AppCompatActivity{
 
@@ -114,15 +115,15 @@ public class MainActivity extends AppCompatActivity{
     /**
      * Der Socket, der das Handy mit dem Server verbindet, der die Nachrichten verschickt
      */
-    private Socket client;
+    private Socket server;
     /**
-     * Der ClientMessageSender, der es ermöglicht Nachrichten einfach zu versenden
+     * Der MessageSender, der es ermöglicht Nachrichten einfach zu versenden
      */
-    private ClientMessageSender clientMessageSender;
+    private MessageSender serverMessageSender;
     /**
      * Der PingListener wartet auf die Nachricht, ob ein Pind erfolgreich war, oder nicht
      */
-    private ClientMessageSender.PingListener pingListener = new ClientMessageSender.PingListener(){
+    private MessageSender.PingListener pingListener = new MessageSender.PingListener(){
         @Override
         public void onConnectionDetected(boolean connected){
 //          Wir zeigen dem User, ob der Ping erfolgreich war
@@ -146,15 +147,15 @@ public class MainActivity extends AppCompatActivity{
         }
     };
     /**
-     * Der ClientMessageListener, der auf Nachrichten vom Server wartet, und sobald eine
+     * Der MessageListener, der auf Nachrichten vom Server wartet, und sobald eine
      * empfangen wurde, ein OnMessageReceived-Event abschickt
      */
-    private ClientMessageListener clientMessageListener;
+    private MessageListener serverMessageListener;
     /**
-     * Der {@link ClientMessageListener.OnMessageReceivedListener}, der
+     * Der {@link MessageListener.OnMessageReceivedListener}, der
      * darauf wartet, dass eine Nachricht erhalten wird.
      */
-    private ClientMessageListener.OnMessageReceivedListener receivedListener = new ClientMessageListener.OnMessageReceivedListener(){
+    private MessageListener.OnMessageReceivedListener receivedListener = new MessageListener.OnMessageReceivedListener(){
         @Override
         public void onMessageReceived(String name, String msg){
 //          Die Nachricht wird einfach hinzugefügt, wobei die Nachricht immer empfangen
@@ -168,14 +169,14 @@ public class MainActivity extends AppCompatActivity{
         }
     };
     /**
-     * Dieser ClosingDetector frägt ab, ob der ClientMessageListener aufhören soll auf Nachrichten zu hören.
+     * Dieser ClosingDetector frägt ab, ob der MessageListener aufhören soll auf Nachrichten zu hören.
      */
-    private ClientMessageListener.ClosingDetector closingDetector = new ClientMessageListener.ClosingDetector(){
+    private MessageListener.ClosingDetector closingDetector = new MessageListener.ClosingDetector(){
         @Override
         public boolean isNotToBeClosed(Thread runningThr){
-//          Da clientMessageListener in #onStop auf null gesetzt wird, und geschleifte Threads auf den ausführenden
+//          Da serverMessageListener in #onStop auf null gesetzt wird, und geschleifte Threads auf den ausführenden
 //          Thread abhängig gemacht werden soll, können wir Referenzen des ausführenden Threads und des Listeners vergleichen
-            return clientMessageListener == runningThr && online;
+            return serverMessageListener == runningThr && online;
         }
     };
 
@@ -187,6 +188,11 @@ public class MainActivity extends AppCompatActivity{
      * Diese Variable zeigt an, ob der Server erreicht werden konnte, oder nicht
      */
     private boolean serverReached;
+    /**
+     * Diese Variable zeigt an, ob wir gerade versuchen uns mit dem Server zu verbinden
+     */
+    private boolean tryingToConnect;
+
     /**
      * Dieses Callback soll uns so schnell wie möglich und automatisch wieder mit dem
      * Server verbinden.
@@ -273,6 +279,8 @@ public class MainActivity extends AppCompatActivity{
         });
 
         mSendEditText = (EditText) findViewById(R.id.sendEditText);
+
+        tryingToConnect = false;
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
@@ -362,39 +370,46 @@ public class MainActivity extends AppCompatActivity{
         return false;
     }
 
+
     /**
      * Diese Methode baut eine Verbindung zum Server auf, von dem wir die Nachrichten bekommen
      */
     private void connectToServer(){
-//      Initialisierung der Serververbindung auf einem eigenen Thread, da Android
-//      keine Netzwerkkommunikation auf dem MainThread erlaubt
-        new Thread(new Runnable(){
-            @Override
-            public void run(){
-                try{
-                    client = new Socket(getString(R.string.serverinfo_url), getResources().getInteger(R.integer.serverinfo_port));
+        if(!tryingToConnect && !serverReached && online){
+            tryingToConnect = true;
 
-                    clientMessageSender = new ClientMessageSender(new DataOutputStream(client.getOutputStream()));
-                    clientMessageSender.setPingListener(pingListener);
+//          Initialisierung der Serververbindung auf einem eigenen Thread, da Android
+//          keine Netzwerkkommunikation auf dem MainThread erlaubt
+            new Thread(new Runnable(){
+                @Override
+                public void run(){
+                    try{
+                        server = new Socket(getString(R.string.serverinfo_url), getResources().getInteger(R.integer.serverinfo_port));
 
-                    clientMessageListener = new ClientMessageListener(new DataInputStream(client.getInputStream()));
-                    clientMessageListener.setClosingDetector(closingDetector);
-                    clientMessageListener.setOnMessageReceivedListener(receivedListener);
-                    clientMessageListener.bindMessageSender(clientMessageSender);
-                    clientMessageListener.start();
+                        serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
+                        serverMessageSender.setPingListener(pingListener);
 
-                    clientMessageSender.changeName(currentName);
+                        serverMessageListener = new MessageListener(new DataInputStream(server.getInputStream()));
+                        serverMessageListener.setClosingDetector(closingDetector);
+                        serverMessageListener.setOnMessageReceivedListener(receivedListener);
+                        serverMessageListener.bindMessageSender(serverMessageSender);
+                        serverMessageListener.start();
 
-                    serverReached = true;
-                }catch(SocketException e){
-                    e.printStackTrace();
-                    serverReached = false;
-                    showDisconnectedErrorMessage();
-                }catch(IOException e){
-                    e.printStackTrace();
+                        serverMessageSender.changeName(currentName);
+
+                        serverReached = true;
+                    }catch(SocketException e){
+                        e.printStackTrace();
+                        serverReached = false;
+                        showDisconnectedErrorMessage();
+                    }catch(IOException e){
+                        e.printStackTrace();
+                    }
+
+                    tryingToConnect = false;
                 }
-            }
-        }).start();
+            }).start();
+        }
     }
 
     @Override
@@ -403,12 +418,12 @@ public class MainActivity extends AppCompatActivity{
 
         if(online && serverReached){
             try{
-//              Sobald die Activity endet lassen wir den ClientMessageListener auslaufen, indem wir clientMessageListener auf null setzen,
+//              Sobald die Activity endet lassen wir den MessageListener auslaufen, indem wir serverMessageListener auf null setzen,
 //              wodurch closingDetector#isNotToBeClosed(Thread) auf false gesetzt wird
-                clientMessageListener = null;
+                serverMessageListener = null;
 //              Und schließen alle Streams
-                client.close();
-                clientMessageSender.close();
+                server.close();
+                serverMessageSender.close();
             }catch(IOException e){
                 e.printStackTrace();
             }
@@ -543,7 +558,7 @@ public class MainActivity extends AppCompatActivity{
                 String msg = mSendEditText.getText().toString();
 
 //              Senden sie an den Server
-                clientMessageSender.send(msg);
+                serverMessageSender.send(msg);
 
 //              fügen sie zum Chat hinzu
                 addMessage(msg, Message.Type.Sent);
@@ -562,7 +577,7 @@ public class MainActivity extends AppCompatActivity{
      */
     private void pingServer(){
         if(online && serverReached){
-            clientMessageSender.pingServer();
+            serverMessageSender.pingServer();
         }else if(online){
             showDisconnectedErrorMessage();
         }else{
@@ -636,7 +651,7 @@ public class MainActivity extends AppCompatActivity{
                 if(serverReached) {
 //                  falls wir mit dem Server verbunden sind schicken wir den Namen an den Server;
 //                  ansonsten geben wir die entsprechende Fehlermeldung aus
-                    clientMessageSender.changeName(newName);
+                    serverMessageSender.changeName(newName);
                 } else {
                     showDisconnectedErrorMessage();
                 }

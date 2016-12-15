@@ -30,11 +30,11 @@ public class ReceivedMessage extends Message {
     /**
      * Dieser Konstruktor erstellt eine neue Nachricht, welche zur Zeit des Aufrufs des Konstruktors entstand
      *
-     * @param mes     Die Nachricht als Text
      * @param name    Der Name des Users, der die Nachricht verschickt hat
+     * @param mes     Die Nachricht als Text
      * @param msgType Der Typ der Nachricht
      */
-    public ReceivedMessage(String mes, String name, Type msgType){
+    public ReceivedMessage(String name, String mes, Type msgType){
         super(mes, msgType);
 
         this.userName = name;
@@ -44,12 +44,12 @@ public class ReceivedMessage extends Message {
      * Dieser Konstruktor erstellt eine neue Nachricht, welche zur gegebenen Zeit entstand.
      * Dieser Konstruktor sollte genutzt werden, um beispielsweise Nachrichten (woher auch immer) zu laden.
      *
-     * @param mes     Die Nachricht als Text
      * @param name    Der Name des Users, der die Nachricht verschickt hat
+     * @param mes     Die Nachricht als Text
      * @param time    Die Zeit, zu der die Nachricht entstand
      * @param msgType Der Typ der Nachricht
      */
-    ReceivedMessage(String mes, String name, long time, Type msgType){
+    ReceivedMessage(String name, String mes, long time, Type msgType){
         super(mes, time, msgType);
 
         this.userName = name;

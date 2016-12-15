@@ -21,6 +21,12 @@
 
     <string name="message_sendTextField_hint">Ihre Nachrich eingeben</string>
 
+    <string name="defaultUserName">Unbekannter Nutzer</string>
+    <string name="settings_savesettings">Speichern</string>
+    <string name="settings_yourusernamehint">Ihr Benutzername</string>
+    <string name="settingsmessage_invalidusername">Das ist ein ungültiger Benutzername.</string>
+    <string name="settingsBottomSheetCaption">Einstellungen</string>
+
     <string name="action_pingserver">Server anpingen</string>
 
     <string name="pingresult_connected">Serververbindung ist hergestellt.</string>
@@ -31,5 +37,6 @@
     <string name="internetmessage_offline">Leider sind wir derzeit offline.</string>
     <string name="internetmessage_serverdown">Der Server scheint ausgefallen zu sein…</string>
     <string name="internetmessage_serverdown_reconnect">Verbinden</string>
+    <string name="action_showsettings">Einstellungen</string>
 
 </resources>
