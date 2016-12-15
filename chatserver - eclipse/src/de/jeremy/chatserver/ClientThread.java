@@ -70,7 +70,7 @@ public class ClientThread extends Thread {
 	private void userMessage() throws IOException {
 		String msg = input.readUTF();
 		System.out.println(name + client.getInetAddress() + " said: " + msg);
-		cs.sendMsg(msg, client);
+		cs.sendMsg(name + ": " + msg, client);
 	}
 
 	private void serverMessage() throws IOException {
