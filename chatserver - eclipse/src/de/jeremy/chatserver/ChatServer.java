@@ -67,7 +67,7 @@ public class ChatServer {
 		}
 	}
 
-	public synchronized void sendMsg(String msg, Socket sender) throws IOException {
+	public synchronized void sendMsg(String name, String msg, Socket sender) throws IOException {
 
 		for (Socket client : clients) {
 			if (client != null && !client.getInetAddress().equals(sender.getInetAddress())) {
@@ -75,6 +75,7 @@ public class ChatServer {
 
 				try {
 					output.writeByte(BYTECODE_MESSAGE);
+					output.writeUTF(name);
 					output.writeUTF(msg);
 					output.flush();
 				} catch (IOException e) {
