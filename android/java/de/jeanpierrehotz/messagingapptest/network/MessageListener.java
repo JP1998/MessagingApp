@@ -21,13 +21,13 @@ import java.io.IOException;
 
 /**
  * Diese Klasse bietet die Funktionalität Nachrichten des Servers leicht zu erhalten.<br>
- * Bevor der Thread gestartet wird muss dem Objekt ein {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.ClosingDetector}-Objekt
+ * Bevor der Thread gestartet wird muss dem Objekt ein {@link MessageListener.ClosingDetector}-Objekt
  * übergeben werden, in dem eine Terminierungsbedingung gestellt wird. Bspw.:
  * <pre><code>
-    <span style="color: #808080;">// setup the ClientMessageListener with a DataInputStream of your choice</span>
-    ClientMessageListener cml = <span style="color: #000080;">new</span> ClientMessageListener(<span style="color: #808080;">[...]</span>);
-    <span style="color: #808080;">// give it a {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.ClosingDetector}</span>
-    cml.setClosingDetector(<span style="color: #000080;">new</span> ClientMessageListener.ClosingDetector(){
+    <span style="color: #808080;">// setup the MessageListener with a DataInputStream of your choice</span>
+    MessageListener cml = <span style="color: #000080;">new</span> MessageListener(<span style="color: #808080;">[...]</span>);
+    <span style="color: #808080;">// give it a {@link MessageListener.ClosingDetector}</span>
+    cml.setClosingDetector(<span style="color: #000080;">new</span> MessageListener.ClosingDetector(){
         <span style="color: #808000;">&#64;Override</span>
         <span style="color: #000080;">public boolean</span> isNotToBeClosed(Thread runningThr){
             <span style="color: #000080;">return</span> cml == runningThr && isToBeKeptOnline();
@@ -43,7 +43,7 @@ import java.io.IOException;
     <span style="color: #808080;">// to terminate listening to messages from the stream</span>
  * </code></pre>
  */
-public class ClientMessageListener extends Thread implements ClientConnected{
+public class MessageListener extends Thread implements Connected{
 
     /**
      * Der Stream, von dem wir Nachrichten erhalten möchten
@@ -53,7 +53,7 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     /**
      * Der ClosingDetector, der die Terminierungsbedingung darstellt.<br>
      * Diese Variable muss mit der {@link #setClosingDetector(ClosingDetector)}-Methode initialisiert worden sein,
-     * bevor der ClientMessageListener gestartet werden kann.
+     * bevor der MessageListener gestartet werden kann.
      */
     private ClosingDetector closingDetector;
     /**
@@ -62,22 +62,22 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     private OnMessageReceivedListener messageReceivedListener;
 
     /**
-     * Der ClientMessageSender, der für die Ping-Funktion an diesen ClientMessageListener gebunden wurde
+     * Der MessageSender, der für die Ping-Funktion an diesen MessageListener gebunden wurde
      */
-    private ClientMessageSender boundMessageSender;
+    private MessageSender boundMessageSender;
 
     /**
-     * Dieser Konstruktor erstellt einen ClientMessageListener für den gegebenen DataInputStream
+     * Dieser Konstruktor erstellt einen MessageListener für den gegebenen DataInputStream
      *
      * @param input der DataInputStream mit dem kommuniziert werden soll
      */
-    public ClientMessageListener(DataInputStream input){
+    public MessageListener(DataInputStream input){
         this.input = input;
         this.closingDetector = null;
     }
 
     /**
-     * Diese Methode setzt den {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.OnMessageReceivedListener},
+     * Diese Methode setzt den {@link MessageListener.OnMessageReceivedListener},
      * mit welchem Nachrichten, die empfangen wurden verwertet werden können
      *
      * @param listener der Listener, der auf Nachrichten warten soll
@@ -87,9 +87,9 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     }
 
     /**
-     * Diese Methode setzt den {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.ClosingDetector},
+     * Diese Methode setzt den {@link MessageListener.ClosingDetector},
      * welcher die Terminierungsbedingung darstellt.<br>
-     * Diese Methode muss aufgerufen werden, bevor der ClientMessageListener gestartet wird.
+     * Diese Methode muss aufgerufen werden, bevor der MessageListener gestartet wird.
      *
      * @param closingDetector der ClosingDetector, der die Terminierungsbedingung darstellt
      */
@@ -98,16 +98,16 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     }
 
     /**
-     * Diese Methode bindet den gegebenen {@link ClientMessageSender} an dieses Objekt, um mit diesem für die Ping-Funktion zu kommunizieren
+     * Diese Methode bindet den gegebenen {@link MessageSender} an dieses Objekt, um mit diesem für die Ping-Funktion zu kommunizieren
      *
-     * @param sender Der ClientMessageSender, der mit diesem ClientMessageListener zusammenarbeiten soll
+     * @param sender Der MessageSender, der mit diesem MessageListener zusammenarbeiten soll
      */
-    public void bindMessageSender(ClientMessageSender sender){
+    public void bindMessageSender(MessageSender sender){
         this.boundMessageSender = sender;
     }
 
     /**
-     * @throws IllegalStateException falls kein {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.ClosingDetector} gegeben ist.
+     * @throws IllegalStateException falls kein {@link MessageListener.ClosingDetector} gegeben ist.
      */
     @Override
     public synchronized void start(){
@@ -135,26 +135,20 @@ public class ClientMessageListener extends Thread implements ClientConnected{
                     }
 //                  falls wir den Code für eine Server-Nachricht erhalten
                     else if(readByte == BYTECODE_SERVERMESSAGE){
-//                      lesen wir den Code für die Server-Nachricht
-                        byte servermsg = input.readByte();
-
-//                      und falls die Server-Nachricht eine Ping-Antwort ist
-                        if(servermsg == BYTECODE_SERVERPING){
-//                          und wir ein gebundenes ClientMessageSender-Objekt haben
-                            if(boundMessageSender != null){
-//                              informieren wir dieses, dass eine Antwort auf den Ping angekommen ist
-                                boundMessageSender.onPingReceived(true);
-                            }
-                        }
-//                      falls wir eine Nachricht vom Server bekommen
-                        else if(servermsg == BYTECODE_MESSAGE) {
-//                          lesen wir diese aus
-                            String msg = input.readUTF();
+//                      lesen wir diese aus
+                        String msg = input.readUTF();
 
 //                          und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
-                            if(messageReceivedListener != null && !msg.trim().equals("")) {
-                                messageReceivedListener.onServerMessageReceived(msg);
-                            }
+                        if(messageReceivedListener != null && !msg.trim().equals("")){
+                            messageReceivedListener.onServerMessageReceived(msg);
+                        }
+                    }
+//                  falls die Nachricht eine Ping-Antwort ist
+                    else if(readByte == BYTECODE_SERVERPING){
+//                      und wir ein gebundenes MessageSender-Objekt haben
+                        if(boundMessageSender != null){
+//                          informieren wir dieses, dass eine Antwort auf den Ping angekommen ist
+                            boundMessageSender.onPingReceived(true);
                         }
                     }
                 }catch(IOException e){
@@ -179,7 +173,7 @@ public class ClientMessageListener extends Thread implements ClientConnected{
 //      falls keine Terminierungsbedingung vorhanden ist
         else{
 //          werfen wir eine Exception, da es ohne Terminierungsbedingung nicht geht ^^
-            throw new IllegalStateException("ClosingDetector is needed! Use ClientMessageListener#setClosingDetector(ClosingDetector).");
+            throw new IllegalStateException("ClosingDetector is needed! Use MessageListener#setClosingDetector(ClosingDetector).");
         }
     }
 
@@ -189,7 +183,7 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     public interface OnMessageReceivedListener{
 
         /**
-         * Diese Methode wird ausgeführt, sobald der ClientMessageListener vom Server die gegebene Nachricht erhält
+         * Diese Methode wird ausgeführt, sobald der MessageListener vom Server die gegebene Nachricht erhält
          *
          * @param name der Name des Users, der die Nachricht verschickt hat
          * @param msg die Nachricht, die vom Server erhalten wurde
@@ -197,7 +191,7 @@ public class ClientMessageListener extends Thread implements ClientConnected{
         void onMessageReceived(String name, String msg);
 
         /**
-         * Diese Methode wird ausgeführt, sobald der ClientMessageListener vom Server eine Server-Nachricht bekommt
+         * Diese Methode wird ausgeführt, sobald der MessageListener vom Server eine Server-Nachricht bekommt
          * @param msg Die Server-Nachricht, die empfangen wurde
          */
         void onServerMessageReceived(String msg);
@@ -206,15 +200,15 @@ public class ClientMessageListener extends Thread implements ClientConnected{
     /**
      * Dieses Interface stellt eine Terminierungsbedingung dar.
      *
-     * @see ClientMessageListener
+     * @see MessageListener
      */
     public interface ClosingDetector{
 
         /**
-         * In dieser Methode muss zurückgegeben werden, ob der ClientMessageListener weiterhin auf Nachrichten warten soll, oder nicht
+         * In dieser Methode muss zurückgegeben werden, ob der MessageListener weiterhin auf Nachrichten warten soll, oder nicht
          *
          * @param runningThr Die Referenz zu dem Thread, der auf die Nachrichten wartet
-         * @return ob der ClientMessageListener weiterhin auf Nachrichten warten soll, oder nicht
+         * @return ob der MessageListener weiterhin auf Nachrichten warten soll, oder nicht
          */
         boolean isNotToBeClosed(Thread runningThr);
     }

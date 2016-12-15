@@ -19,8 +19,12 @@ package de.jeanpierrehotz.messagingapptest.network;
 /**
  * Dieses Interface kann implementiert werden, damit die konstanten byte-Codes global konsisitent sind.
  */
-public interface ClientConnected{
+public interface Connected{
 
+    /**
+     * Die Konstante, die anzeigt, dass die Verbindung geschlossen wird
+     */
+    byte BYTECODE_CLOSECONNECTION = -1;
     /**
      * Die Konstante, welche eine Nachricht von einem User einleitet
      */
@@ -28,14 +32,14 @@ public interface ClientConnected{
     /**
      * Die Konstante, die eine Servernachricht einleitet
      */
-    byte BYTECODE_SERVERMESSAGE = 99;
+    byte BYTECODE_SERVERMESSAGE = 2;
     /**
-     * Die Konstante, die anzeigt, dass die Verbindung geschlossen wird
+     * Die Konstante, die die Veränderung des Benutzernamens einleitet
      */
-    byte BYTECODE_CLOSECONNECTION = -1;
+    byte BYTECODE_CHANGENAME = 3;
     /**
      * Die Konstante, die den Server anpingt (Antwort ist die selbe)
      */
-    byte BYTECODE_SERVERPING = 100;
+    byte BYTECODE_SERVERPING = 4;
 
 }

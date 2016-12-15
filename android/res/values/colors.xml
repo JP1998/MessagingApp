@@ -35,4 +35,5 @@
     <color name="colorConnectionRestored">#5bbc8c</color>
     <color name="colorConnectionLost">#d85f46</color>
     <color name="colorConnectionFont">@color/white</color>
+    <color name="receivedNameColor">#ff0000</color>
 </resources>

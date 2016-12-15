@@ -22,25 +22,25 @@ import java.io.IOException;
 /**
  * Diese Klasse kann genutzt werden, um auf einfache Art und Weise Nachrichten vom
  * Endnutzer-Gerät an den Server zu schicken.
- * Um die Ping-Funktion zu nutzen muss das ClientMessageSender-Objekt auf folgende Art und Weise
- * mit einem {@link ClientMessageListener}-Objekt gebunden sein:
+ * Um die Ping-Funktion zu nutzen muss das MessageSender-Objekt auf folgende Art und Weise
+ * mit einem {@link MessageListener}-Objekt gebunden sein:
  * <pre><code>
     <span style="color: #808080;">// setup the {@link java.net.Socket} to connect to</span>
     Socket client = <span style="color: #000080;">new</span> Socket(<span style="color: #007700;">"yoururl.ddns.net"</span>, <span style="color: #0000FF;">8080</span>);
 
-    <span style="color: #808080;">// setup the ClientMessageSender according to the Socket, and give it a {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageSender.PingListener}</span>
-    ClientMessageSender clientMessageSender = <span style="color: #000080;">new</span> ClientMessageSender(<span style="color: #808080;">[...]</span>);
+    <span style="color: #808080;">// setup the MessageSender according to the Socket, and give it a {@link MessageSender.PingListener}</span>
+    MessageSender clientMessageSender = <span style="color: #000080;">new</span> MessageSender(<span style="color: #808080;">[...]</span>);
     clientMessageSender.setPingListener(<span style="color: #808080;">[...]</span>);
 
-    <span style="color: #808080;">// setup the {@link ClientMessageListener}, give it a {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageListener.ClosingDetector},</span>
-    <span style="color: #808080;">// bind the ClientMessageSender to it and start listening for messages</span>
-    ClientMessageListener clientMessageListener = <span style="color: #000080;">new</span> ClientMessageListener(<span style="color: #808080;">[...]</span>);
+    <span style="color: #808080;">// setup the {@link MessageListener}, give it a {@link MessageListener.ClosingDetector},</span>
+    <span style="color: #808080;">// bind the MessageSender to it and start listening for messages</span>
+    MessageListener clientMessageListener = <span style="color: #000080;">new</span> MessageListener(<span style="color: #808080;">[...]</span>);
     clientMessageListener.setClosingDetector(<span style="color: #808080;">[...]</span>);
     clientMessageListener.bindMessageSender(clientMessageSender);
     clientMessageListener.start();
  * </code></pre>
  */
-public class ClientMessageSender implements ClientConnected{
+public class MessageSender implements Connected{
 
     /**
      * Die Zeit in ms, die auf eine Antwort auf einen Ping gewartet wird, bevor die Verbindung als unterbrochen angesehen wird
@@ -94,11 +94,11 @@ public class ClientMessageSender implements ClientConnected{
     private boolean pingTimeoutRunning;
 
     /**
-     * Dieser Konstruktor erstellt einen ClientMessageSender für den gegebenen DataOutputStream
+     * Dieser Konstruktor erstellt einen MessageSender für den gegebenen DataOutputStream
      *
      * @param out der DataOutputStream mit dem kommuniziert werden soll
      */
-    public ClientMessageSender(DataOutputStream out){
+    public MessageSender(DataOutputStream out){
         sendingStream = out;
         pingRunning = false;
         pingTimeoutRunning = false;
@@ -110,7 +110,7 @@ public class ClientMessageSender implements ClientConnected{
 
     /**
      * Diese Methode leitet einen Ping an den Server ein.<br>
-     * Um nach dem Erhalt des Resultats des Pings benachrichtigt werden können sie den {@link de.jeanpierrehotz.messagingapptest.network.ClientMessageSender.PingListener} nutzen.<br>
+     * Um nach dem Erhalt des Resultats des Pings benachrichtigt werden können sie den {@link MessageSender.PingListener} nutzen.<br>
      * Die Methode sendet den Ping-Befehl an den Server, stellt ein, dass er eine Ping-Antwort erwartet (mit {@link #pingRunning}), und
      * startet den TimeOutDetector, damit nach {@link #PING_TIMEOUT}ms der Ping abgerochen wird
      */
@@ -123,7 +123,6 @@ public class ClientMessageSender implements ClientConnected{
                 public void run(){
                     try{
 //                      sende den Pingbefehl
-                        sendingStream.writeByte(BYTECODE_SERVERMESSAGE);
                         sendingStream.writeByte(BYTECODE_SERVERPING);
                         sendingStream.flush();
 
@@ -194,8 +193,7 @@ public class ClientMessageSender implements ClientConnected{
             public void run(){
                 try{
 //                  den Namen senden, wobei wir davor sagen, dass das der neue Name ist
-                    sendingStream.writeByte(BYTECODE_SERVERMESSAGE);
-                    sendingStream.writeByte(BYTECODE_MESSAGE);
+                    sendingStream.writeByte(BYTECODE_CHANGENAME);
                     sendingStream.writeUTF(newName);
                     sendingStream.flush();
                 }catch(IOException e){
@@ -206,7 +204,7 @@ public class ClientMessageSender implements ClientConnected{
     }
 
     /**
-     * Diese Methode zeigt dem ClientMessageSender-Objekt an, dass eine Antwort auf den Ping erhalten wurde.<br>
+     * Diese Methode zeigt dem MessageSender-Objekt an, dass eine Antwort auf den Ping erhalten wurde.<br>
      * Diese ermittelt dann, ob diese ausgewertet werden muss, und feuert, falls nötig ein Event für den PingListener
      *
      * @param success ob der erhaltene Ping Erfolg hatte

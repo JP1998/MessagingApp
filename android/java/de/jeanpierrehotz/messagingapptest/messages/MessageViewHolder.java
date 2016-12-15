@@ -21,7 +21,7 @@ import android.view.View;
 
 /**
  * Diese Klasse wird genutzt, um die Views für eine Nachricht zu speichern, wobei diese Klasse
- * nur als Super-Klasse zu nutzen ist, die die Funktionalität {@link #setData(String)} hinzufügt,
+ * nur als Super-Klasse zu nutzen ist, die die Funktionalität {@link #setData(Message)} hinzufügt,
  * und als allgemeiner ViewHolder des {@link MessageAdapter} gilt.
  */
 public abstract class MessageViewHolder extends RecyclerView.ViewHolder {
@@ -34,6 +34,6 @@ public abstract class MessageViewHolder extends RecyclerView.ViewHolder {
      * Diese Methode soll die Nachricht in dem View des ViewHolders anzeigen
      * @param msg die Nachricht, die angezeigt werden soll
      */
-    public abstract void setData(String msg);
+    public abstract void setData(Message msg);
 
 }

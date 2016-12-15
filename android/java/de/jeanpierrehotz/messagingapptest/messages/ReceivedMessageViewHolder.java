@@ -19,6 +19,9 @@ package de.jeanpierrehotz.messagingapptest.messages;
 import android.view.View;
 import android.widget.TextView;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+
 import de.jeanpierrehotz.messagingapptest.R;
 
 /**
@@ -30,16 +33,34 @@ public class ReceivedMessageViewHolder extends MessageViewHolder {
      * Das TextView, welches die eigentliche Nachricht anzeigt
      */
     private TextView receivedTextView;
+    /**
+     * Das TextView, welches die Zeit der Nachricht anzeigt
+     */
+    private TextView timeTextView;
+    /**
+     * Das TextView, welches den Namen des Users anzeigt, der die Nachricht verschickt hat
+     */
+    private TextView nameTextView;
 
     public ReceivedMessageViewHolder(View itemView){
         super(itemView);
 
         receivedTextView = (TextView) itemView.findViewById(R.id.messageTextView);
+        timeTextView = (TextView) itemView.findViewById(R.id.message_timeTextView);
+        nameTextView = (TextView) itemView.findViewById(R.id.message_nameTextView);
     }
 
     @Override
-    public void setData(String msg){
-        receivedTextView.setText(msg);
+    public void setData(Message msg){
+        if(msg instanceof ReceivedMessage){
+            receivedTextView.setText(msg.getMessage());
+
+            Calendar cal = Calendar.getInstance();
+            cal.setTimeInMillis(msg.getTime());
+            timeTextView.setText(new SimpleDateFormat("HH:mm").format(cal.getTime()));
+
+            nameTextView.setText(((ReceivedMessage) msg).getUserName());
+        }
     }
 
 }

@@ -20,7 +20,14 @@
 
     <string name="message_sendTextField_hint">Type your message</string>
 
+    <string name="defaultUserName">Unknown user</string>
+    <string name="settings_savesettings">Save</string>
+    <string name="settings_yourusernamehint">Your username</string>
+    <string name="settingsmessage_invalidusername">This is an invalid username.</string>
+    <string name="settingsBottomSheetCaption">Settings</string>
+
     <string name="action_pingserver">Ping Server</string>
+    <string name="action_showsettings">Settings</string>
 
     <string name="pingresult_connected">Connection to the server is established.</string>
     <string name="pingresult_timedout">The connection to the server has timed out.</string>
@@ -35,5 +42,9 @@
 
     <string name="serverinfo_url" translatable="false">verelpi.ddns.net</string>
     <integer name="serverinfo_port">1234</integer>
+
+    <string name="prefs_settings_preference" translatable="false">SharedPreferences prefs = getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE);</string>
+    <string name="prefs_settings_firstLaunch" translatable="false">if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {</string>
+    <string name="prefs_settings_currentname" translatable="false">currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));</string>
 
 </resources>
