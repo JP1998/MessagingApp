@@ -29,7 +29,8 @@ public class ClientMessageListener extends Thread {
 				
 				switch(input.readByte()){
 					case BYTECODE_MESSAGE:
-						System.out.println(input.readUTF());
+						String s = input.readUTF() + ": " + input.readUTF();
+						System.out.println(s);
 						break;
 					case BYTECODE_SERVERMESSAGE:
 						System.out.println("Server: " + input.readUTF());
