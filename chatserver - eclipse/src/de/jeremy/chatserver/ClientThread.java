@@ -90,7 +90,7 @@ public class ClientThread extends Thread {
 			String oldName = name;
 			name = input.readUTF();
 			String message = oldName + " changed name to " + name;
-			System.out.println(message);
+			System.out.println("Server: " + message);
 			cs.serverMessage(message, client, true);
 		}
 		

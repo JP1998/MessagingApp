@@ -92,7 +92,7 @@ public class ChatServer {
 					try {
 						DataOutputStream output = new DataOutputStream(client.getOutputStream());
 						output.writeByte(BYTECODE_SERVERMESSAGE);
-						output.writeUTF("Server: " + message);
+						output.writeUTF(message);
 						output.flush();
 					} catch (IOException e) {
 						System.out.println("couldnt send message");
