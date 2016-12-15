@@ -6,6 +6,7 @@ import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class ChatServer {
   
@@ -45,7 +46,7 @@ public class ChatServer {
   }
   
   public synchronized void sendMsg(String msg, Socket sender) throws IOException{
-    
+	  
     for(Socket client: clients){
       if(client != null && !client.getInetAddress().equals(sender.getInetAddress())){
         DataOutputStream output =  new DataOutputStream(client.getOutputStream());
@@ -101,5 +102,4 @@ public class ChatServer {
       }
     }
   }
-  
 }
