@@ -19,6 +19,8 @@ public class ClientThread extends Thread {
 	private static final byte BYTECODE_CHANGENAME = 3;
 	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
+	private static final byte BYTECODE_NAMESCOUNT = 6;
+
 
 	public ClientThread(ChatServer cs, Socket client) {
 		this.cs = cs;
@@ -56,7 +58,9 @@ public class ClientThread extends Thread {
 					changeName();
 					break;
 				case BYTECODE_NAMES:
-					cs.sendAllNames();
+					cs.sendAllNames(name, client);
+				case BYTECODE_NAMESCOUNT:
+					cs.sendNamesCountSingle(name, client);
 				default:
 					break;
 				}
@@ -86,7 +90,6 @@ public class ClientThread extends Thread {
 			System.out.println("client connected: " + name + client.getInetAddress());
 			String messsage = name + " joined the chat";
 			cs.serverMessage(messsage, client, false);
-
 			cs.addName(name);
 
 		} else {
@@ -95,7 +98,6 @@ public class ClientThread extends Thread {
 			String message = oldName + " changed name to " + name;
 			System.out.println("Server: " + message);
 			cs.serverMessage(message, client, true);
-
 			cs.changeName(oldName, name);
 		}
 
