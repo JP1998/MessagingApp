@@ -10,11 +10,10 @@ public class ClientMessageListener extends Thread {
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
-	//private static final byte BYTECODE_CHANGENAME = 3;
+	// private static final byte BYTECODE_CHANGENAME = 3;
 	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
-
 
 	private DataInputStream input;
 

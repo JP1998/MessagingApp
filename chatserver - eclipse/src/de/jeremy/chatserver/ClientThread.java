@@ -54,7 +54,7 @@ public class ClientThread extends Thread {
 					changeName();
 					break;
 				case BYTECODE_NAMES:
-					cs.sendAllNames(hashCode());
+					cs.sendAllNames(hashCode);
 					break;
 				case BYTECODE_NAMESCOUNT:
 					cs.sendNamesCountSingle(hashCode);

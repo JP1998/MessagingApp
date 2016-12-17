@@ -13,11 +13,11 @@ public class ChatServer {
 	HashMap<Integer, Socket> clientMap;
 	HashMap<Integer, String> nameMap;
 
-	//private static final byte BYTECODE_CLOSECONNECTION = -1;	
+	// private static final byte BYTECODE_CLOSECONNECTION = -1;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
-	//private static final byte BYTECODE_CHANGENAME = 3;
-	//private static final byte BYTECODE_SERVERPING = 4;
+	// private static final byte BYTECODE_CHANGENAME = 3;
+	// private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
 
@@ -103,7 +103,7 @@ public class ChatServer {
 		String name = nameMap.get(hashCode);
 		Socket s = clientMap.get(hashCode);
 
-		System.out.println(name + s.getInetAddress() + " requested user count");
+		System.out.println(name + getInetAddress(hashCode) + " requested user count");
 		try {
 			DataOutputStream output = new DataOutputStream(s.getOutputStream());
 			output.writeByte(BYTECODE_NAMESCOUNT);
@@ -118,7 +118,7 @@ public class ChatServer {
 		String name = nameMap.get(hashCode);
 		Socket s = clientMap.get(hashCode);
 
-		System.out.println(name + s.getInetAddress() + " requested all names");
+		System.out.println(name + getInetAddress(hashCode) + " requested all names");
 		StringBuilder sb = new StringBuilder();
 		nameMap.forEach((k, v) -> sb.append(v + ";"));
 		try {
@@ -133,10 +133,9 @@ public class ChatServer {
 	public synchronized void sendMsg(String msg, int hashCode) throws IOException {
 
 		String name = nameMap.get(hashCode);
-		Socket s = clientMap.get(hashCode);
 
 		for (Socket client : clientMap.values()) {
-			if (client != null && !client.getInetAddress().equals(s.getInetAddress())) {
+			if (client != null && client.hashCode() != hashCode) {
 				DataOutputStream output = new DataOutputStream(client.getOutputStream());
 				try {
 					output.writeByte(BYTECODE_MESSAGE);
@@ -152,11 +151,9 @@ public class ChatServer {
 
 	public synchronized void serverMessage(String message, int hashCode, boolean showSender) {
 
-		Socket s = clientMap.get(hashCode);
-
 		for (Socket client : clientMap.values()) {
 			if (client != null) {
-				if (!client.getInetAddress().equals(s.getInetAddress()) || showSender) {
+				if (client.hashCode() != hashCode || showSender) {
 					try {
 						DataOutputStream output = new DataOutputStream(client.getOutputStream());
 						output.writeByte(BYTECODE_SERVERMESSAGE);
