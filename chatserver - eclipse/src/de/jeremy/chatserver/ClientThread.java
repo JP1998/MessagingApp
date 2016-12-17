@@ -13,12 +13,13 @@ public class ClientThread extends Thread {
 	private DataOutputStream output;
 	private String name;
 
-	
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
 	private static final byte BYTECODE_CHANGENAME = 3;
 	private static final byte BYTECODE_SERVERPING = 4;
+	private static final byte BYTECODE_NAMES = 5;
+	private static final byte BYTECODE_NAMESCOUNT = 6;
 
 
 	public ClientThread(ChatServer cs, Socket client) {
@@ -44,7 +45,6 @@ public class ClientThread extends Thread {
 					done = true;
 					closeConenction();
 					break;
-					
 				case BYTECODE_SERVERPING:
 					ping();
 					break;
@@ -57,6 +57,10 @@ public class ClientThread extends Thread {
 				case BYTECODE_CHANGENAME:
 					changeName();
 					break;
+				case BYTECODE_NAMES:
+					cs.sendAllNames(name, client);
+				case BYTECODE_NAMESCOUNT:
+					cs.sendNamesCountSingle(name, client);
 				default:
 					break;
 				}
@@ -78,23 +82,25 @@ public class ClientThread extends Thread {
 		System.out.println("Server: " + message);
 		cs.serverMessage(message, client, true);
 	}
-	
-	private void changeName() throws IOException{
-		
-		if(name == null){
+
+	private void changeName() throws IOException {
+
+		if (name == null) {
 			name = input.readUTF();
 			System.out.println("client connected: " + name + client.getInetAddress());
 			String messsage = name + " joined the chat";
 			cs.serverMessage(messsage, client, false);
-		}else{
+			cs.addName(name);
+
+		} else {
 			String oldName = name;
 			name = input.readUTF();
 			String message = oldName + " changed name to " + name;
 			System.out.println("Server: " + message);
 			cs.serverMessage(message, client, true);
+			cs.changeName(oldName, name);
 		}
-		
-		
+
 	}
 
 	private void ping() throws IOException {
@@ -111,7 +117,7 @@ public class ClientThread extends Thread {
 		input.close();
 		output.close();
 		client.close();
-
+		cs.removeName(name);
 	}
 
 	private void lostConnection() {
@@ -120,10 +126,12 @@ public class ClientThread extends Thread {
 			input.close();
 			output.close();
 			client.close();
-		} catch (IOException e) {}
+		} catch (IOException e) {
+		}
 		cs.fixStreams(client);
 		String messsage = "Client " + name + " lost connection.";
 		cs.serverMessage(messsage, client, false);
+		cs.removeName(name);
 	}
 
 }
