@@ -3,12 +3,13 @@ package de.jeremy.chatserver;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.net.Socket;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public class ClientThread extends Thread {
 
 	private ChatServer cs;
-	private Socket client;
+	private int hashCode;
 	private DataInputStream input;
 	private DataOutputStream output;
 	private String name;
@@ -21,16 +22,11 @@ public class ClientThread extends Thread {
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
 
-
-	public ClientThread(ChatServer cs, Socket client) {
+	public ClientThread(ChatServer cs, int hashCode, InputStream in, OutputStream out) {
 		this.cs = cs;
-		this.client = client;
-		try {
-			input = new DataInputStream(client.getInputStream());
-			output = new DataOutputStream(client.getOutputStream());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		this.hashCode = hashCode;
+		input = new DataInputStream(in);
+		output = new DataOutputStream(out);
 	}
 
 	public void run() {
@@ -58,9 +54,11 @@ public class ClientThread extends Thread {
 					changeName();
 					break;
 				case BYTECODE_NAMES:
-					cs.sendAllNames(name, client);
+					cs.sendAllNames(hashCode());
+					break;
 				case BYTECODE_NAMESCOUNT:
-					cs.sendNamesCountSingle(name, client);
+					cs.sendNamesCountSingle(hashCode);
+					break;
 				default:
 					break;
 				}
@@ -73,65 +71,62 @@ public class ClientThread extends Thread {
 
 	private void userMessage() throws IOException {
 		String msg = input.readUTF();
-		System.out.println(name + client.getInetAddress() + " said: " + msg);
-		cs.sendMsg(name, msg, client);
+		System.out.println(name + cs.getInetAddress(hashCode) + " said: " + msg);
+		cs.sendMsg(msg, hashCode);
 	}
 
 	private void serverMessage() throws IOException {
 		String message = input.readUTF();
 		System.out.println("Server: " + message);
-		cs.serverMessage(message, client, true);
+		cs.serverMessage(message, hashCode, true);
 	}
 
 	private void changeName() throws IOException {
 
 		if (name == null) {
 			name = input.readUTF();
-			System.out.println("client connected: " + name + client.getInetAddress());
+			System.out.println("client connected: " + name + cs.getInetAddress(hashCode));
 			String messsage = name + " joined the chat";
-			cs.serverMessage(messsage, client, false);
-			cs.addName(name);
+			cs.serverMessage(messsage, hashCode, false);
+			cs.addName(name, hashCode);
 
 		} else {
 			String oldName = name;
 			name = input.readUTF();
 			String message = oldName + " changed name to " + name;
 			System.out.println("Server: " + message);
-			cs.serverMessage(message, client, true);
-			cs.changeName(oldName, name);
+			cs.serverMessage(message, hashCode, true);
+			cs.changeName(name, hashCode);
 		}
-
 	}
 
 	private void ping() throws IOException {
-		System.out.println(name + client.getInetAddress() + " checked for connection");
+		System.out.println(name + cs.getInetAddress(hashCode) + " checked for connection");
 		output.writeByte(BYTECODE_SERVERPING);
 		output.flush();
 	}
 
 	private void closeConenction() throws IOException {
-		System.out.println("Client " + name + client.getInetAddress() + " left");
+		System.out.println("Client " + name + cs.getInetAddress(hashCode) + " left");
 		String messsage = "Client " + name + " has left the chat.";
-		cs.serverMessage(messsage, client, false);
-		cs.fixStreams(client);
+		cs.serverMessage(messsage, hashCode, false);
+		cs.fixStreams(hashCode);
 		input.close();
 		output.close();
-		client.close();
-		cs.removeName(name);
+		cs.removeName(hashCode);
 	}
 
 	private void lostConnection() {
-		System.out.println("Client " + name + client.getInetAddress() + " lost connection");
+		System.out.println("Client " + name + cs.getInetAddress(hashCode) + " lost connection");
 		try {
 			input.close();
 			output.close();
-			client.close();
 		} catch (IOException e) {
 		}
-		cs.fixStreams(client);
+		cs.fixStreams(hashCode);
 		String messsage = "Client " + name + " lost connection.";
-		cs.serverMessage(messsage, client, false);
-		cs.removeName(name);
+		cs.serverMessage(messsage, hashCode, false);
+		cs.removeName(hashCode);
 	}
 
 }

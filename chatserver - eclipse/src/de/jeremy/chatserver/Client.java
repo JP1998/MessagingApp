@@ -10,11 +10,17 @@ import java.util.Scanner;
 public class Client {
 
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
-	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
 	private static final byte BYTECODE_CHANGENAME = 3;
+	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
+	private static final byte BYTECODE_NAMESCOUNT = 6;
+
+	// private final String STRING_IPADRESSE = "192.168.0.110";
+	private final String STRING_IPADRESSE = "localhost";
+
+	private String name = "peter";
 
 	private Socket client;
 	private DataOutputStream out;
@@ -24,9 +30,10 @@ public class Client {
 			setup();
 			System.out.println("start");
 			boolean done = false;
+			Scanner in = new Scanner(System.in);
 			while (!done) {
 
-				Scanner in = new Scanner(System.in);
+				
 				String s = in.nextLine();
 
 				if (s.equals("servercheck")) {
@@ -45,11 +52,15 @@ public class Client {
 					out.flush();
 				} else if (s.startsWith("/name ")) {
 					s = s.substring(6, s.length());
+					name = s;
 					out.writeByte(BYTECODE_CHANGENAME);
 					out.writeUTF(s);
 					out.flush();
 				} else if (s.startsWith("/shownames")) {
 					out.writeByte(BYTECODE_NAMES);
+					out.flush();
+				} else if (s.startsWith("/namecount")) {
+					out.writeByte(BYTECODE_NAMESCOUNT);
 					out.flush();
 				} else {
 					out.writeByte(BYTECODE_MESSAGE);
@@ -58,12 +69,11 @@ public class Client {
 				}
 
 			}
+			in.close();
 
 		} catch (UnknownHostException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
@@ -73,13 +83,13 @@ public class Client {
 	}
 
 	public void setup() throws UnknownHostException, IOException {
-		client = new Socket("localhost", 1234);
+		client = new Socket(STRING_IPADRESSE, 1234);
 		out = new DataOutputStream(client.getOutputStream());
 		out.writeByte(BYTECODE_CHANGENAME);
-		out.writeUTF("Jeremy");
+		out.writeUTF(name);
 		out.flush();
 
-		new ClientMessageListener(this, new DataInputStream(client.getInputStream())).start();
+		new ClientMessageListener(new DataInputStream(client.getInputStream())).start();
 	}
 
 }

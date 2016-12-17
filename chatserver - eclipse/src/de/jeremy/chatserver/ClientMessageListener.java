@@ -8,17 +8,17 @@ import java.util.List;
 public class ClientMessageListener extends Thread {
 
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
-	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
-	private static final byte BYTECODE_CHANGENAME = 3;
+	//private static final byte BYTECODE_CHANGENAME = 3;
+	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
+	private static final byte BYTECODE_NAMESCOUNT = 6;
 
-	private Client client;
+
 	private DataInputStream input;
 
-	public ClientMessageListener(Client client, DataInputStream input) {
-		this.client = client;
+	public ClientMessageListener(DataInputStream input) {
 		this.input = input;
 	}
 
@@ -47,6 +47,9 @@ public class ClientMessageListener extends Thread {
 				case BYTECODE_NAMES:
 					List<String> list = Arrays.asList(input.readUTF().split(";"));
 					list.forEach(System.out::println);
+					break;
+				case BYTECODE_NAMESCOUNT:
+					System.out.println("Verbundenen Nutzer: " + input.readInt());
 					break;
 				default:
 					break;

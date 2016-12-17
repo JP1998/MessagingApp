@@ -2,30 +2,31 @@ package de.jeremy.chatserver;
 
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.HashMap;
 
 public class ChatServer {
 
 	private ServerSocket server;
-	private ArrayList<Socket> clients;
-	private ArrayList<String> names;
+	HashMap<Integer, Socket> clientMap;
+	HashMap<Integer, String> nameMap;
 
-	private static final byte BYTECODE_CLOSECONNECTION = -1;
+	//private static final byte BYTECODE_CLOSECONNECTION = -1;	
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
-	private static final byte BYTECODE_CHANGENAME = 3;
-	private static final byte BYTECODE_SERVERPING = 4;
+	//private static final byte BYTECODE_CHANGENAME = 3;
+	//private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
 
 	private static final int INT_PORT = 1234;
 
 	public ChatServer() {
-		clients = new ArrayList<>();
-		names = new ArrayList<>();
+
+		nameMap = new HashMap<>();
+		clientMap = new HashMap<>();
 		System.out.println("Server started");
 
 		try {
@@ -37,7 +38,6 @@ public class ChatServer {
 			try {
 				server.close();
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -53,8 +53,8 @@ public class ChatServer {
 			try {
 				System.out.println("waiting for clients...");
 				Socket client = server.accept();
-				clients.add(client);
-				new ClientThread(this, client).start();
+				clientMap.put(client.hashCode(), client);
+				new ClientThread(this, client.hashCode(), client.getInputStream(), client.getOutputStream()).start();
 
 			} catch (IOException e) {
 				System.out.println("Client couldnt connect");
@@ -62,70 +62,67 @@ public class ChatServer {
 		}
 	}
 
-	public synchronized void fixStreams(Socket sender) {
-		for (int i = 0; i < clients.size(); i++) {
-
-			if (clients.get(i) == null || clients.get(i).getInetAddress().equals(sender.getInetAddress())) {
-				clients.remove(i);
-				System.out.println("fixed streams...");
-			}
+	public synchronized void fixStreams(int hashCode) {
+		try {
+			clientMap.get(hashCode).close();
+		} catch (IOException e) {
 		}
+		clientMap.remove(hashCode);
+		System.out.println("fixed streams...");
+
 	}
 
-	public synchronized void addName(String name) {
-		names.add(name);
+	public synchronized void addName(String name, int hashCode) {
+		nameMap.put(hashCode, name);
 		sendNamesCount();
 	}
 
-	public synchronized void removeName(String name) {
-		names.remove(name);
+	public synchronized void removeName(int hashCode) {
+		nameMap.remove(hashCode);
 		sendNamesCount();
 	}
 
-	public synchronized void changeName(String oldName, String newName) {
-
-		names.replaceAll((t) -> {
-			if (t.equals(oldName)) {
-				t = newName;
-			}
-			return t;
-		});
+	public synchronized void changeName(String name, int hashCode) {
+		nameMap.replace(hashCode, name);
 	}
 
 	public synchronized void sendNamesCount() {
-		for (Socket client : clients) {
+		for (Socket client : clientMap.values()) {
 			try {
 				DataOutputStream output = new DataOutputStream(client.getOutputStream());
 				output.writeByte(BYTECODE_NAMESCOUNT);
-				output.writeInt(names.size());
+				output.writeInt(nameMap.size());
 				output.flush();
 			} catch (IOException e) {
 			}
 		}
 	}
 
-	public synchronized void sendNamesCountSingle(String userName, Socket client){
-		
-		System.out.println(userName + client.getInetAddress() + " requested user count");
+	public synchronized void sendNamesCountSingle(int hashCode) {
 
-		
+		String name = nameMap.get(hashCode);
+		Socket s = clientMap.get(hashCode);
+
+		System.out.println(name + s.getInetAddress() + " requested user count");
 		try {
-			DataOutputStream output = new DataOutputStream(client.getOutputStream());
+			DataOutputStream output = new DataOutputStream(s.getOutputStream());
 			output.writeByte(BYTECODE_NAMESCOUNT);
-			output.writeInt(names.size());
+			output.writeInt(nameMap.size());
 			output.flush();
 		} catch (IOException e) {
 		}
 	}
-	
-	public synchronized void sendAllNames(String userName, Socket client) {
 
-		System.out.println(userName + client.getInetAddress() + " requested all names");
+	public synchronized void sendAllNames(int hashCode) {
 
+		String name = nameMap.get(hashCode);
+		Socket s = clientMap.get(hashCode);
+
+		System.out.println(name + s.getInetAddress() + " requested all names");
 		StringBuilder sb = new StringBuilder();
-		names.forEach((s) -> sb.append(s + ";"));
+		nameMap.forEach((k, v) -> sb.append(v + ";"));
 		try {
-			DataOutputStream output = new DataOutputStream(client.getOutputStream());
+			DataOutputStream output = new DataOutputStream(s.getOutputStream());
 			output.writeByte(BYTECODE_NAMES);
 			output.writeUTF(sb.toString());
 			output.flush();
@@ -133,12 +130,14 @@ public class ChatServer {
 		}
 	}
 
-	public synchronized void sendMsg(String name, String msg, Socket sender) throws IOException {
+	public synchronized void sendMsg(String msg, int hashCode) throws IOException {
 
-		for (Socket client : clients) {
-			if (client != null && !client.getInetAddress().equals(sender.getInetAddress())) {
+		String name = nameMap.get(hashCode);
+		Socket s = clientMap.get(hashCode);
+
+		for (Socket client : clientMap.values()) {
+			if (client != null && !client.getInetAddress().equals(s.getInetAddress())) {
 				DataOutputStream output = new DataOutputStream(client.getOutputStream());
-
 				try {
 					output.writeByte(BYTECODE_MESSAGE);
 					output.writeUTF(name);
@@ -151,10 +150,13 @@ public class ChatServer {
 		}
 	}
 
-	public synchronized void serverMessage(String message, Socket sender, boolean showSender) {
-		for (Socket client : clients) {
+	public synchronized void serverMessage(String message, int hashCode, boolean showSender) {
+
+		Socket s = clientMap.get(hashCode);
+
+		for (Socket client : clientMap.values()) {
 			if (client != null) {
-				if (!client.getInetAddress().equals(sender.getInetAddress()) || showSender) {
+				if (!client.getInetAddress().equals(s.getInetAddress()) || showSender) {
 					try {
 						DataOutputStream output = new DataOutputStream(client.getOutputStream());
 						output.writeByte(BYTECODE_SERVERMESSAGE);
@@ -166,5 +168,9 @@ public class ChatServer {
 				}
 			}
 		}
+	}
+
+	public InetAddress getInetAddress(int hashCode) {
+		return clientMap.get(hashCode).getInetAddress();
 	}
 }
