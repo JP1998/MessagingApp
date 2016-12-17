@@ -4,11 +4,9 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-import java.util.Arrays;
-import java.util.List;
 
 public class BetterThread extends Thread {
-	
+
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
@@ -16,7 +14,7 @@ public class BetterThread extends Thread {
 	private static final byte BYTECODE_SERVERPING = 4;
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
-	
+
 	private final String STRING_IPADRESSE = "192.168.0.110";
 	private final int INT_PORT = 1234;
 
@@ -24,10 +22,10 @@ public class BetterThread extends Thread {
 	private Socket client;
 	private DataInputStream in;
 	private DataOutputStream out;
-	
+
 	private String name;
 	private boolean done;
-	
+
 	public BetterThread(BetterClient bc) {
 		this.bc = bc;
 		done = false;
@@ -43,9 +41,9 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void run(){
-		
+
+	public void run() {
+
 		while (!done) {
 			try {
 				switch (in.readByte()) {
@@ -66,7 +64,8 @@ public class BetterThread extends Thread {
 					System.exit(1);
 					break;
 				case BYTECODE_NAMES:
-					bc.updateNameList(in.readUTF().replaceAll(";", "\n"));;
+					bc.updateNameList(in.readUTF().replaceAll(";", "\n"));
+					;
 					break;
 				case BYTECODE_NAMESCOUNT:
 					bc.addMessage("Verbundenen Nutzer: " + in.readInt());
@@ -83,9 +82,9 @@ public class BetterThread extends Thread {
 
 		}
 	}
-	
-	public void servercheck(){
-		
+
+	public void servercheck() {
+
 		try {
 			out.writeByte(BYTECODE_SERVERPING);
 			out.flush();
@@ -93,8 +92,8 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void stopChatting(){
+
+	public void stopChatting() {
 		done = true;
 		try {
 			out.writeByte(BYTECODE_CLOSECONNECTION);
@@ -105,8 +104,8 @@ public class BetterThread extends Thread {
 		}
 		System.exit(1);
 	}
-	
-	public void changeName(String s){
+
+	public void changeName(String s) {
 		s = s.substring(6, s.length());
 		try {
 			out.writeByte(BYTECODE_CHANGENAME);
@@ -116,8 +115,8 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void showAllNames(){
+
+	public void showAllNames() {
 		try {
 			out.writeByte(BYTECODE_NAMES);
 			out.flush();
@@ -125,8 +124,8 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void namesCount(){
+
+	public void namesCount() {
 		try {
 			out.writeByte(BYTECODE_NAMESCOUNT);
 			out.flush();
@@ -134,8 +133,8 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void sendServerMessage(String msg){
+
+	public void sendServerMessage(String msg) {
 		msg = msg.substring(3, msg.length());
 		try {
 			out.writeInt(BYTECODE_SERVERMESSAGE);
@@ -145,8 +144,8 @@ public class BetterThread extends Thread {
 			e.printStackTrace();
 		}
 	}
-	
-	public void sendMessage(String msg){
+
+	public void sendMessage(String msg) {
 		bc.addMessage(name + ": " + msg);
 		try {
 			out.writeByte(BYTECODE_MESSAGE);
