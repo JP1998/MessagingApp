@@ -21,6 +21,20 @@
     tools:context="de.jeanpierrehotz.messagingapptest.MainActivity">
 
     <item
+        android:id="@+id/action_usercount"
+        android:orderInCategory="99"
+        android:titleCondensed="@string/usercount_default_condensed"
+        android:title="@string/usercount_default"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_users"
+        android:orderInCategory="100"
+        android:icon="@drawable/ic_vector_users"
+        android:title="@string/action_users"
+        app:showAsAction="ifRoom"/>
+
+    <item
         android:id="@+id/action_ping"
         android:orderInCategory="101"
         android:icon="@drawable/ic_vector_menu_ping"

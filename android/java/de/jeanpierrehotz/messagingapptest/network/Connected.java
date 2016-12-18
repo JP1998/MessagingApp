@@ -41,5 +41,13 @@ public interface Connected{
      * Die Konstante, die den Server anpingt (Antwort ist die selbe)
      */
     byte BYTECODE_SERVERPING = 4;
+    /**
+     * Die Konstante, die genutzt wird, um eine Liste der Namen der verbundenen Nutzer zu versenden
+     */
+    byte BYTECODE_NAMES = 5;
+    /**
+     * Die Konstante, die genutzt wird, um die Anzahl an verbundenen Nutzern zu versenden
+     */
+    byte BYTECODE_NAMESCOUNT = 6;
 
 }

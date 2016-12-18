@@ -47,4 +47,12 @@
     <string name="prefs_settings_firstLaunch" translatable="false">if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {</string>
     <string name="prefs_settings_currentname" translatable="false">currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));</string>
 
+    <string name="action_users">User list</string>
+    <string name="usercount_default_condensed">0</string>
+    <string name="usercount_default">0 Users connected</string>
+    <string name="usercount_template_condensed">%1$1d</string>
+    <string name="usercount_template">%1$1d Users connected</string>
+    <string name="userlist_caption">Connected users</string>
+    <string name="prefs_messages">MessageLoader.saveMessages(mMessages, getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE));</string>
+
 </resources>

@@ -16,6 +16,8 @@
 
 package de.jeanpierrehotz.messagingapptest.messages;
 
+import android.support.annotation.Nullable;
+
 /**
  * Diese Klasse wird genutzt, um eine Nachricht darzustellen
  */
@@ -92,7 +94,47 @@ public class Message{
     public enum Type{
         Sent,
         Received,
-        Announcement
+        Announcement;
+
+        /**
+         * Die Codes, die die Nachrichtentypen darstellen.
+         * Sollten nur zum Speichern genutzt werden.
+         */
+        private static final int
+                CODE_SENT = 0x1234,
+                CODE_RECEIVED = 0x2341,
+                CODE_ANNOUNCEMENT = 0x3412,
+                CODE_INVALID = 0x4123;
+
+        /**
+         * Diese Methode gibt ihnen den Code, mit dem sich der Nachrichtentyp darstellen lässt.
+         *
+         * @return der repräsentierende Code
+         */
+        public int getCode(){
+            switch(this){
+                case Sent: return CODE_SENT;
+                case Received: return CODE_RECEIVED;
+                case Announcement: return CODE_ANNOUNCEMENT;
+                default: return CODE_INVALID;
+            }
+        }
+
+        /**
+         * Diese Methode erzeugt aus einem Code den entsprechenden Nachrichtentyp.
+         *
+         * @param code der Code, der decodiert werden soll
+         * @return der Nachrichtentyp, der von dem gegebenen Code dargestellt wird; {@code null} bei ungültigem Code
+         */
+        @Nullable
+        public static Type fromCode(int code){
+            switch(code){
+                case CODE_SENT: return Sent;
+                case CODE_RECEIVED: return Received;
+                case CODE_ANNOUNCEMENT: return Announcement;
+                default: return null;
+            }
+        }
     }
 
 }

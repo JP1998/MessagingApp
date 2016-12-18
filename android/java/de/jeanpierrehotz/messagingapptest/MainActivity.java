@@ -16,6 +16,7 @@
 
 package de.jeanpierrehotz.messagingapptest;
 
+import android.app.AlertDialog;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -31,7 +32,6 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -60,6 +60,7 @@ import java.util.Calendar;
 import de.jeanpierrehotz.messagingapptest.funuistuff.ColoredSnackbar;
 import de.jeanpierrehotz.messagingapptest.messages.Message;
 import de.jeanpierrehotz.messagingapptest.messages.MessageAdapter;
+import de.jeanpierrehotz.messagingapptest.messages.MessageLoader;
 import de.jeanpierrehotz.messagingapptest.messages.ReceivedMessage;
 import de.jeanpierrehotz.messagingapptest.network.MessageListener;
 import de.jeanpierrehotz.messagingapptest.network.MessageSender;
@@ -83,7 +84,6 @@ public class MainActivity extends AppCompatActivity{
      * Der derzeitige UserName
      */
     private String currentName;
-
 
     /**
      * Die Liste von Nachrichten, die erstmal nur für eine Sitzung gespeichert werden
@@ -111,6 +111,10 @@ public class MainActivity extends AppCompatActivity{
      * Das EditText, in dem die Nachricht eingegeben werden soll
      */
     private EditText mSendEditText;
+    /**
+     * Das MenuItem, das die Anzahl an verbundenen Nutzern anzeigt
+     */
+    private MenuItem mUserCountItem;
 
     /**
      * Der Socket, der das Handy mit dem Server verbindet, der die Nachrichten verschickt
@@ -166,6 +170,19 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onServerMessageReceived(String msg){
             addMessage(msg, Message.Type.Announcement);
+        }
+
+        @Override
+        public void onUserCountReceived(int count){
+            setNameCount(count);
+        }
+
+        @Override
+        public void onUserNamesReceived(String[] names){
+            new AlertDialog.Builder(MainActivity.this)
+                    .setTitle(R.string.userlist_caption)
+                    .setItems(names, null)
+                    .show();
         }
     };
     /**
@@ -238,8 +255,7 @@ public class MainActivity extends AppCompatActivity{
         setSupportActionBar(toolbar);
 
 //      Initialisierung der Nachrichtenliste
-        mMessages = new ArrayList<>();
-//      TODO: Evtl. gespeicherte Nachrichten laden?
+        mMessages = MessageLoader.loadMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE));
 
 //      Initialisierug der Einstellungen
         settingsBottomSheetLayout = (RelativeLayout) findViewById(R.id.settingsBottomSheet);
@@ -284,7 +300,7 @@ public class MainActivity extends AppCompatActivity{
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
-        if(isConnectionAvailable()){
+        if(isInternetConnectionAvailable()){
             online = true;
             connectToServer();
         }else{
@@ -340,7 +356,7 @@ public class MainActivity extends AppCompatActivity{
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
-        if(isConnectionAvailable()){
+        if(isInternetConnectionAvailable()){
             online = true;
             connectToServer();
         }else{
@@ -359,7 +375,7 @@ public class MainActivity extends AppCompatActivity{
      *
      * @return ob Internet verfügbar ist
      */
-    private boolean isConnectionAvailable(){
+    private boolean isInternetConnectionAvailable(){
         ConnectivityManager manager = (ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE);
         Network[] networks = manager.getAllNetworks();
         for(Network net : networks){
@@ -369,7 +385,6 @@ public class MainActivity extends AppCompatActivity{
         }
         return false;
     }
-
 
     /**
      * Diese Methode baut eine Verbindung zum Server auf, von dem wir die Nachrichten bekommen
@@ -428,6 +443,9 @@ public class MainActivity extends AppCompatActivity{
                 e.printStackTrace();
             }
         }
+
+        MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages, 10); // TODO: Remove limit
+        // TODO: Implement proper limit
     }
 
     /**
@@ -558,7 +576,7 @@ public class MainActivity extends AppCompatActivity{
                 String msg = mSendEditText.getText().toString();
 
 //              Senden sie an den Server
-                serverMessageSender.send(msg);
+                serverMessageSender.sendMessage(msg);
 
 //              fügen sie zum Chat hinzu
                 addMessage(msg, Message.Type.Sent);
@@ -578,6 +596,44 @@ public class MainActivity extends AppCompatActivity{
     private void pingServer(){
         if(online && serverReached){
             serverMessageSender.pingServer();
+        }else if(online){
+            showDisconnectedErrorMessage();
+        }else{
+            showOfflineErrorMessage();
+        }
+    }
+
+    /**
+     * Diese Methode fordert die Anzahl an verbundenen Nutzern vom Server an
+     */
+    private void requestNameCount() {
+        if(online && serverReached){
+            serverMessageSender.sendNameCountRequest();
+        }else if(online){
+            setNameCount(0);
+            showDisconnectedErrorMessage();
+        }else{
+            setNameCount(0);
+            showOfflineErrorMessage();
+        }
+    }
+
+    /**
+     * Diese Methode aktualisiert die Anzahl an verbundenen Nutzern
+     *
+     * @param count die Anzahl an verbundenen Nutzern
+     */
+    private void setNameCount(int count) {
+        mUserCountItem.setTitle(String.format(getString(R.string.usercount_template), count));
+        mUserCountItem.setTitleCondensed(String.format(getString(R.string.usercount_template_condensed), count));
+    }
+
+    /**
+     * Diese Methode fordert eine Liste der Namen der verbundenen Nutzern vom Server an
+     */
+    private void requestNames(){
+        if(online && serverReached){
+            serverMessageSender.sendNamesRequest();
         }else if(online){
             showDisconnectedErrorMessage();
         }else{
@@ -670,6 +726,7 @@ public class MainActivity extends AppCompatActivity{
     public boolean onCreateOptionsMenu(Menu menu){
 //      Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        mUserCountItem = menu.findItem(R.id.action_usercount);
         return true;
     }
 
@@ -686,6 +743,13 @@ public class MainActivity extends AppCompatActivity{
             return true;
         } else if(id == R.id.action_settings) {
             settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
+            return true;
+        } else if(id == R.id.action_users) {
+            requestNames();
+            return true;
+        } else if(id == R.id.action_usercount) {
+            requestNameCount();
+            return true;
         }
 
         return super.onOptionsItemSelected(item);

@@ -115,27 +115,8 @@ public class MessageSender implements Connected{
      * startet den TimeOutDetector, damit nach {@link #PING_TIMEOUT}ms der Ping abgerochen wird
      */
     public void pingServer(){
-//      nur einen Ping starten, falls er nicht mit dem vorhergehenden in Konflikt gerät
-        if(!pingTimeoutRunning){
-//          auf einem neuen Thread (Android erlaubt keine Netzwerkkommunikation auf dem Mainthread)
-            new Thread(new Runnable(){
-                @Override
-                public void run(){
-                    try{
-//                      sende den Pingbefehl
-                        sendingStream.writeByte(BYTECODE_SERVERPING);
-                        sendingStream.flush();
-
-//                      auf Ping-Antwort warten
-                        pingRunning = true;
-
-//                      TimeOutDetector starten
-                        new Thread(pingRunnable).start();
-                    }catch(IOException e){
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
+        if(!pingTimeoutRunning) {
+            this.send(BYTECODE_SERVERPING, null, false, true);
         }
     }
 
@@ -144,21 +125,7 @@ public class MessageSender implements Connected{
      * keine Nachrichten mehr erhalten soll.
      */
     public void close(){
-//      auf einem neuen Thread (Android erlaubt keine Netzwerkkommunikation auf dem Mainthread)
-        new Thread(new Runnable(){
-            @Override
-            public void run(){
-                try{
-//                  den Server benachrichtigen, dass der Teilnehmer sich trennt
-                    sendingStream.write(BYTECODE_CLOSECONNECTION);
-                    sendingStream.flush();
-//                  danach den Stream schließen
-                    sendingStream.close();
-                }catch(IOException e){
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+        this.send(BYTECODE_CLOSECONNECTION, null, true);
     }
 
     /**
@@ -166,37 +133,74 @@ public class MessageSender implements Connected{
      *
      * @param msg die Nachricht, die zu verschicken ist
      */
-    public void send(final String msg){
-//      auf einem neuen Thread (Android erlaubt keine Netzwerkkommunikation auf dem Mainthread)
-        new Thread(new Runnable(){
-            @Override
-            public void run(){
-                try{
-//                  die Nachricht senden, wobei wir davor sagen, dass diese Nachricht für die User ist
-                    sendingStream.writeByte(BYTECODE_MESSAGE);
-                    sendingStream.writeUTF(msg);
-                    sendingStream.flush();
-                }catch(IOException e){
-                    e.printStackTrace();
-                }
-            }
-        }).start();
+    public void sendMessage(String msg){
+        this.send(BYTECODE_MESSAGE, msg);
     }
 
     /**
      * Diese Methode benachrichtigt den Server, dass der User einen neuen Namen benutzen möchte
      * @param newName der neue Name,der benutzt werden soll
      */
-    public void changeName(final String newName) {
+    public void changeName(String newName) {
+        this.send(BYTECODE_CHANGENAME, newName);
+    }
+
+    public void sendNameCountRequest(){
+        this.send(BYTECODE_NAMESCOUNT, null);
+    }
+
+    public void sendNamesRequest(){
+        this.send(BYTECODE_NAMES, null);
+    }
+
+    /**
+     *
+     * The field {@code param} is accounted as additional, and should only be given if needed.<br>
+     * The position of the values in said field is of importance, and may lead to extreme misbehavior
+     * if not taken into account.<br>
+     * The needed order can be seen in the table below:
+     * <table style="border: 1px solid black;">
+     *     <tr>
+     *         <th>index</th>
+     *         <th>name</th>
+     *         <th>further description</th>
+     *     </tr>
+     *     <tr>
+     *         <td>0</td>
+     *         <td>close</td>
+     *         <td>whether to close the stream after sending the message or not</td>
+     *     </tr>
+     *     <tr>
+     *         <td>1</td>
+     *         <td>ping</td>
+     *         <td>whether to listen for a ping answer after sending the message</td>
+     *     </tr>
+     * </table>
+     *
+     * @param code the bytecode to send before the message
+     * @param msg the message to send
+     * @param param additional parameters as explained above
+     */
+    private void send(final byte code, final String msg, final boolean... param) {
         new Thread(new Runnable(){
             @Override
             public void run(){
-                try{
-//                  den Namen senden, wobei wir davor sagen, dass das der neue Name ist
-                    sendingStream.writeByte(BYTECODE_CHANGENAME);
-                    sendingStream.writeUTF(newName);
+                try {
+                    sendingStream.writeByte(code);
+                    if(msg != null) {
+                        sendingStream.writeUTF(msg);
+                    }
                     sendingStream.flush();
-                }catch(IOException e){
+
+                    if(param.length >= 1 && param[0]){
+                        sendingStream.close();
+                    }
+
+                    if(param.length >= 2 && param[1]){
+                        pingRunning = true;
+                        new Thread(pingRunnable).start();
+                    }
+                } catch(IOException e) {
                     e.printStackTrace();
                 }
             }

@@ -24,23 +24,23 @@ import java.io.IOException;
  * Bevor der Thread gestartet wird muss dem Objekt ein {@link MessageListener.ClosingDetector}-Objekt
  * übergeben werden, in dem eine Terminierungsbedingung gestellt wird. Bspw.:
  * <pre><code>
-    <span style="color: #808080;">// setup the MessageListener with a DataInputStream of your choice</span>
-    MessageListener cml = <span style="color: #000080;">new</span> MessageListener(<span style="color: #808080;">[...]</span>);
-    <span style="color: #808080;">// give it a {@link MessageListener.ClosingDetector}</span>
-    cml.setClosingDetector(<span style="color: #000080;">new</span> MessageListener.ClosingDetector(){
-        <span style="color: #808000;">&#64;Override</span>
-        <span style="color: #000080;">public boolean</span> isNotToBeClosed(Thread runningThr){
-            <span style="color: #000080;">return</span> cml == runningThr && isToBeKeptOnline();
-        }
-    });
-    <span style="color: #808080;">// and start listening to the messages</span>
-    cml.start():
-
-    <span style="color: #808080;">// as soon as the application exits you'll have to set cml to null, so it terminates</span>
-    cml = <span style="color: #000080;">null</span>;
-
-    <span style="color: #808080;">// in isToBeKeptOnline()-method you can give further conditions</span>
-    <span style="color: #808080;">// to terminate listening to messages from the stream</span>
+ *  <span style="color: #808080;">// setup the MessageListener with a DataInputStream of your choice</span>
+ *  MessageListener cml = <span style="color: #000080;">new</span> MessageListener(<span style="color: #808080;">[...]</span>);
+ *  <span style="color: #808080;">// give it a {@link MessageListener.ClosingDetector}</span>
+ *  cml.setClosingDetector(<span style="color: #000080;">new</span> MessageListener.ClosingDetector(){
+ *      <span style="color: #808000;">&#64;Override</span>
+ *      <span style="color: #000080;">public boolean</span> isNotToBeClosed(Thread runningThr){
+ *          <span style="color: #000080;">return</span> cml == runningThr && isToBeKeptOnline();
+ *      }
+ *  });
+ *  <span style="color: #808080;">// and start listening to the messages</span>
+ *  cml.start():
+ *
+ *  <span style="color: #808080;">// as soon as the application exits you'll have to set cml to null, so it terminates</span>
+ *  cml = <span style="color: #000080;">null</span>;
+ *
+ *  <span style="color: #808080;">// in isToBeKeptOnline()-method you can give further conditions</span>
+ *  <span style="color: #808080;">// to terminate listening to messages from the stream</span>
  * </code></pre>
  */
 public class MessageListener extends Thread implements Connected{
@@ -114,6 +114,7 @@ public class MessageListener extends Thread implements Connected{
         super.start();
     }
 
+    @Override
     public void run(){
 //      falls wir eine Terminierungsbedingung haben
         if(closingDetector != null){
@@ -138,7 +139,7 @@ public class MessageListener extends Thread implements Connected{
 //                      lesen wir diese aus
                         String msg = input.readUTF();
 
-//                          und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
+//                      und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
                         if(messageReceivedListener != null && !msg.trim().equals("")){
                             messageReceivedListener.onServerMessageReceived(msg);
                         }
@@ -151,7 +152,28 @@ public class MessageListener extends Thread implements Connected{
                             boundMessageSender.onPingReceived(true);
                         }
                     }
+//                  falls die Nachricht die Anzahl an Nutzern ist
+                    else if(readByte == BYTECODE_NAMESCOUNT){
+//                      lesen wir diese aus
+                        int count = input.readInt();
+
+//                      und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
+                        if(messageReceivedListener != null){
+                            messageReceivedListener.onUserCountReceived(count);
+                        }
+                    }
+//                  falls die Nachricht die Namen der verbundenen Nutzern ist
+                    else if(readByte == BYTECODE_NAMES){
+//                      lesen wir diese aus
+                        String[] names = input.readUTF().split(";");
+
+//                      und falls möglich / nötig geben wir ein Event an den OnMessageReceivedListener
+                        if(messageReceivedListener != null){
+                            messageReceivedListener.onUserNamesReceived(names);
+                        }
+                    }
                 }catch(IOException e){
+                    // TODO: Maybe implement ConnectionLossListener?
                     e.printStackTrace();
                 }
 
@@ -186,15 +208,30 @@ public class MessageListener extends Thread implements Connected{
          * Diese Methode wird ausgeführt, sobald der MessageListener vom Server die gegebene Nachricht erhält
          *
          * @param name der Name des Users, der die Nachricht verschickt hat
-         * @param msg die Nachricht, die vom Server erhalten wurde
+         * @param msg  die Nachricht, die vom Server erhalten wurde
          */
         void onMessageReceived(String name, String msg);
 
         /**
          * Diese Methode wird ausgeführt, sobald der MessageListener vom Server eine Server-Nachricht bekommt
+         *
          * @param msg Die Server-Nachricht, die empfangen wurde
          */
         void onServerMessageReceived(String msg);
+
+        /**
+         * Diese Methode wird ausgeführt, sobald der MessageListener vom Server die Anzahl an Nutzern bekommt
+         *
+         * @param count Die Anzahl an Nutzern, die mit dem Server verbunden sind
+         */
+        void onUserCountReceived(int count);
+
+        /**
+         * Diese Methode wird ausgeführt, sobald der MessageListener vom Server die Namen der Nutzer bekommt
+         *
+         * @param names Die Namen der verbundenen Nutzer
+         */
+        void onUserNamesReceived(String[] names);
     }
 
     /**
