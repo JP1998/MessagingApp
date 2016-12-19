@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <!--
   ~     Copyright 2016 Jeremy Schiemann, Jean-Pierre Hotz
   ~
@@ -26,8 +25,14 @@
     <string name="settings_yourusernamehint">Ihr Benutzername</string>
     <string name="settingsmessage_invalidusername">Das ist ein ungültiger Benutzername.</string>
     <string name="settingsBottomSheetCaption">Einstellungen</string>
+    <string name="settings_limitsavedmessageshint">Anzahl gespeicherter Nachrichten begrenzen?</string>
+    <string name="settings_limitsavedmessagesamountcaption">Höchstanzahl an gespeicherten Nachrichten</string>
+    <string name="limitsavedmessagesamount_template">%1$1d</string>
 
     <string name="action_pingserver">Server anpingen</string>
+    <string name="action_showsettings">Einstellungen</string>
+    <string name="action_users">Nutzerliste</string>
+    <string name="action_adminmessage">Admin-Nachricht senden</string>
 
     <string name="pingresult_connected">Serververbindung ist hergestellt.</string>
     <string name="pingresult_timedout">Die Verbindung mit dem Server ist ausgefallen.</string>
@@ -37,6 +42,34 @@
     <string name="internetmessage_offline">Leider sind wir derzeit offline.</string>
     <string name="internetmessage_serverdown">Der Server scheint ausgefallen zu sein…</string>
     <string name="internetmessage_serverdown_reconnect">Verbinden</string>
-    <string name="action_showsettings">Einstellungen</string>
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <string name="usercount_default_condensed">0</string>
+    <string name="usercount_default">0 Nutzer verbunden</string>
+    <string name="usercount_template_condensed">%1$1d</string>
+    <string name="usercount_template">%1$1d Nutzer verbunden</string>
+    <string name="userlist_caption">Verbundene Nutzer</string>
+
+    <string name="dialog_adminmessage_title">Admin-Nachricht</string>
+    <string name="dialog_adminmessage_positivebutton">Senden</string>
+    <string name="dialog_adminmessage_negativebutton">Abbrechen</string>
+    <string name="dialog_adminmessage_messagehint">Ihre Admin-Nachricht</string>
+
+    <string name="dialog_adminrights_title">Admin-Rechte benötigt</string>
+    <string name="dialog_adminrights_positivebutton">Eingeben</string>
+    <string name="dialog_adminrights_negativebutton">Abbrechen</string>
+    <string name="dialog_adminrights_passwordhint">Admin Passwort</string>
+    <string name="settingsmessage_invalidadminpassword">Falsches Passwort.</string>
 
 </resources>

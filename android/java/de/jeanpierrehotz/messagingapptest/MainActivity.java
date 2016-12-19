@@ -17,6 +17,7 @@
 package de.jeanpierrehotz.messagingapptest;
 
 import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -37,6 +38,9 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
 import android.widget.RelativeLayout;
+import android.widget.SeekBar;
+import android.widget.Switch;
+import android.widget.TextView;
 
 // See gradle dependencies for following classes
 // compile 'com.facebook.rebound:rebound:0.3.8'
@@ -79,11 +83,57 @@ public class MainActivity extends AppCompatActivity{
     /**
      * Das EditText, in dem der User seinen UserNamen eingeben kann
      */
-    private EditText nameTextView;
+    private EditText currentName_EditText;
+    /**
+     * Der Switch, der den User einstellen lässt, ob er die Anzahl
+     * an gespeicherten Nachrichten an eineV Höchstwert binden möchte
+     */
+    private Switch limitSavedMessages_Switch;
+    /**
+     * Der Seekbar, der den User die Höchstanzahl an gespeicherten Nachrichten einstellen lässt
+     */
+    private SeekBar limitSavedMessagesAmount_SeekBar;
+    /**
+     * Das TextView, welches die derzeitig eingestellte Höchstanzahl an gespeicherten Nachrichten anzeigt
+     */
+    private TextView limitSavedMessagesAmount_TextView;
+
+    /**
+     * Dieser OnSeekBarChangeListener aktualisiert den Inhalt von {@link #limitSavedMessagesAmount_TextView}, sobald
+     * der User {@link #limitSavedMessagesAmount_SeekBar} verändert
+     */
+    private SeekBar.OnSeekBarChangeListener limitSavedMessagesAmount_OnSeekBarChangeListener = new SeekBar.OnSeekBarChangeListener(){
+        @Override
+        public void onProgressChanged(SeekBar seekBar, int i, boolean b){
+            limitSavedMessagesAmount_TextView.setText(String.format(getString(R.string.limitsavedmessagesamount_template), i));
+        }
+
+        @Override
+        public void onStartTrackingTouch(SeekBar seekBar){}
+
+        @Override
+        public void onStopTrackingTouch(SeekBar seekBar){}
+    };
+
     /**
      * Der derzeitige UserName
      */
     private String currentName;
+    /**
+     * Ob derzeitig die Anzahl gespeicherter Nachrichten limitiert werden soll
+     */
+    private boolean limitSavedMessages;
+    /**
+     * Die derzeitige Höchstanzahl an gespeicherten Nachrichten
+     */
+    private int limitSavedMessagesAmount;
+
+
+    /**
+     * Der Dialog, der für die Eingabe des Admin-Passworts genutzt wird
+     */
+    private AlertDialog mAdminPasswordDialog;
+
 
     /**
      * Die Liste von Nachrichten, die erstmal nur für eine Sitzung gespeichert werden
@@ -178,11 +228,16 @@ public class MainActivity extends AppCompatActivity{
         }
 
         @Override
-        public void onUserNamesReceived(String[] names){
-            new AlertDialog.Builder(MainActivity.this)
-                    .setTitle(R.string.userlist_caption)
-                    .setItems(names, null)
-                    .show();
+        public void onUserNamesReceived(final String[] names){
+            runOnUiThread(new Runnable(){
+                @Override
+                public void run(){
+                    new AlertDialog.Builder(MainActivity.this)
+                            .setTitle(R.string.userlist_caption)
+                            .setItems(names, null)
+                            .show();
+                }
+            });
         }
     };
     /**
@@ -261,20 +316,30 @@ public class MainActivity extends AppCompatActivity{
         settingsBottomSheetLayout = (RelativeLayout) findViewById(R.id.settingsBottomSheet);
         settingsBottomSheetBehaviour = BottomSheetBehavior.from(settingsBottomSheetLayout);
 
-        nameTextView = (EditText) findViewById(R.id.userNameEditText);
+        currentName_EditText = (EditText) findViewById(R.id.userNameEditText);
+
+        limitSavedMessages_Switch = (Switch) findViewById(R.id.limitsavedmessages_switch);
+
+        limitSavedMessagesAmount_SeekBar = (SeekBar) findViewById(R.id.limitsavedmessagesamount_seekbar);
+        limitSavedMessagesAmount_TextView = (TextView) findViewById(R.id.limitsavedmessagesamount_textview);
+        limitSavedMessagesAmount_SeekBar.setOnSeekBarChangeListener(limitSavedMessagesAmount_OnSeekBarChangeListener);
 
         SharedPreferences prefs = getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE);
         if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {
             currentName = getString(R.string.defaultUserName);
+            limitSavedMessages = true;
+            limitSavedMessagesAmount = 2500;
 
             prefs.edit().putBoolean(getString(R.string.prefs_settings_firstLaunch), false).apply();
+
+            resetSettingsViews();
             settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
         } else {
             currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));
+            limitSavedMessages = prefs.getBoolean(getString(R.string.prefs_settings_limitsavedmessages), true);
+            limitSavedMessagesAmount = prefs.getInt(getString(R.string.prefs_settings_limitsavedmessagesamount), 2500);
             settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
         }
-
-        nameTextView.setText(currentName);
 
 //      Intialisierung der UI
         mMessagesView = (RecyclerView) findViewById(R.id.messagesView);
@@ -444,8 +509,11 @@ public class MainActivity extends AppCompatActivity{
             }
         }
 
-        MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages, 10); // TODO: Remove limit
-        // TODO: Implement proper limit
+        if(limitSavedMessages) {
+            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages, limitSavedMessagesAmount);
+        } else {
+            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages);
+        }
     }
 
     /**
@@ -591,6 +659,22 @@ public class MainActivity extends AppCompatActivity{
     }
 
     /**
+     * Diese Methode sendet den gegebenen String als Admin-/Server-Nachricht an den Server,
+     * der diese an alle verbundenen Nutzer weiterleitet.
+     *
+     * @param msg Die Nachricht, die zu versenden ist
+     */
+    private void sendAdminMessage(String msg){
+        if(online && serverReached){
+            serverMessageSender.sendAdminMessage(msg);
+        }else if(online){
+            showDisconnectedErrorMessage();
+        }else{
+            showOfflineErrorMessage();
+        }
+    }
+
+    /**
      * Diese Methode leitet einen Ping des Servers ein
      */
     private void pingServer(){
@@ -623,9 +707,14 @@ public class MainActivity extends AppCompatActivity{
      *
      * @param count die Anzahl an verbundenen Nutzern
      */
-    private void setNameCount(int count) {
-        mUserCountItem.setTitle(String.format(getString(R.string.usercount_template), count));
-        mUserCountItem.setTitleCondensed(String.format(getString(R.string.usercount_template_condensed), count));
+    private void setNameCount(final int count) {
+        runOnUiThread(new Runnable(){
+            @Override
+            public void run(){
+                mUserCountItem.setTitle(String.format(getString(R.string.usercount_template), count));
+                mUserCountItem.setTitleCondensed(String.format(getString(R.string.usercount_template_condensed), count));
+            }
+        });
     }
 
     /**
@@ -689,37 +778,70 @@ public class MainActivity extends AppCompatActivity{
     }
 
     /**
+     * Diese Methode zeigt dem User an, dass er das falsche Passwort eingegeben hat.
+     */
+    private void showInvalidAdminPasswordMessage(){
+        ColoredSnackbar.make(
+                ContextCompat.getColor(this, R.color.colorErrorMessage),
+                mMessagesView,
+                getString(R.string.settingsmessage_invalidadminpassword),
+                Snackbar.LENGTH_SHORT,
+                ContextCompat.getColor(this, R.color.colorConnectionFont)
+        ).show();
+    }
+
+    /**
      * Diese Methode speichert die Einstellungen, und lässt das Einstellungs-Panel verschwinden
      * @param v das View, das geklickt wurde
      */
     public void saveSettings(View v) {
 //      wir bekommen den neuen Namen
-        String newName = nameTextView.getText().toString();
+        String newName = currentName_EditText.getText().toString();
 
 //      verhindern den alten und alle leere Namen
-        if(!newName.trim().equals(currentName) && !newName.trim().equals("")) {
+        if(!newName.trim().equals("")) {
+            if(!newName.trim().equals(currentName)){
+//              übernehmen den neuen Namen
+                currentName = newName;
 
-//          übernehmen den neuen Namen, und speichern ihn intern
-            currentName = newName;
-            getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE).edit().putString(getString(R.string.prefs_settings_currentname), currentName).apply();
-
-            if(online) {
-                if(serverReached) {
-//                  falls wir mit dem Server verbunden sind schicken wir den Namen an den Server;
-//                  ansonsten geben wir die entsprechende Fehlermeldung aus
-                    serverMessageSender.changeName(newName);
-                } else {
-                    showDisconnectedErrorMessage();
+                if(online){
+                    if(serverReached){
+//                      falls wir mit dem Server verbunden sind schicken wir den Namen an den Server;
+//                      ansonsten geben wir die entsprechende Fehlermeldung aus
+                        serverMessageSender.changeName(newName);
+                    }else{
+                        showDisconnectedErrorMessage();
+                    }
+                }else{
+                    showOfflineErrorMessage();
                 }
-            } else {
-                showOfflineErrorMessage();
             }
         } else {
             showInvalidUserNameErrorMessage();
         }
 
+        limitSavedMessages = limitSavedMessages_Switch.isChecked();
+        limitSavedMessagesAmount = limitSavedMessagesAmount_SeekBar.getProgress();
+
+//      speichern alles in die Preferences
+        getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE).edit()
+                .putString(getString(R.string.prefs_settings_currentname), currentName)
+                .putBoolean(getString(R.string.prefs_settings_limitsavedmessages), limitSavedMessages)
+                .putInt(getString(R.string.prefs_settings_limitsavedmessagesamount), limitSavedMessagesAmount)
+                .apply();
+
 //      und lassen das Einstellungs-Panel verschwinden
         settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_HIDDEN);
+    }
+
+    /**
+     * Diese Methode setzt den Inhalt der Setting-Views auf deren eigentliche Werte zurück
+     */
+    private void resetSettingsViews(){
+        currentName_EditText.setText(currentName);
+        limitSavedMessages_Switch.setChecked(limitSavedMessages);
+        limitSavedMessagesAmount_SeekBar.setProgress((limitSavedMessagesAmount == 0)? 1: 0);
+        limitSavedMessagesAmount_SeekBar.setProgress(limitSavedMessagesAmount);
     }
 
     @Override
@@ -728,6 +850,58 @@ public class MainActivity extends AppCompatActivity{
         getMenuInflater().inflate(R.menu.menu_main, menu);
         mUserCountItem = menu.findItem(R.id.action_usercount);
         return true;
+    }
+
+    /**
+     * Dieses Runnable gibt dem User die Möglichkeit über einen Dialog eine Admin-/Server-Nachricht zu senden
+     */
+    private Runnable sendAdminMessageRunnable = new Runnable(){
+
+        /**
+         * Der Dialog, der dem User die Möglichkeit gibt eine Admin-/Server-Nachricht zu versenden
+         */
+        private AlertDialog mMessageDialog;
+
+        @Override
+        public void run(){
+            mMessageDialog = new AlertDialog.Builder(MainActivity.this)
+                    .setTitle(R.string.dialog_adminmessage_title)
+                    .setView(R.layout.layout_dialog_adminmessage)
+                    .setPositiveButton(R.string.dialog_adminmessage_positivebutton, new DialogInterface.OnClickListener(){
+                        @Override
+                        public void onClick(DialogInterface dialogInterface, int i){
+                            sendAdminMessage(((EditText) mMessageDialog.findViewById(R.id.layout_adminmessage_messageedittext)).getText().toString());
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_adminmessage_negativebutton, null)
+                    .show();
+        }
+    };
+
+    /**
+     * Diese Methode frägt den User nach dem Admin-Passwort, und führt, falls er das richtige Passwort eingegeben
+     * hat, das gegebene Runnable aus.
+     *
+     * @param executeIfValid das Runnable, das bei richtiger Passworteingabe ausgeführt werden soll
+     */
+    private void askForAdminPassword(final Runnable executeIfValid) {
+        mAdminPasswordDialog = new AlertDialog.Builder(this, R.style.AdminPasswordDialogTheme)
+                .setTitle(R.string.dialog_adminrights_title)
+                .setView(R.layout.layout_dialog_adminpassword)
+                .setPositiveButton(R.string.dialog_adminrights_positivebutton, new DialogInterface.OnClickListener(){
+                    @Override
+                    public void onClick(DialogInterface dialogInterface, int i){
+                        String password = ((EditText) mAdminPasswordDialog.findViewById(R.id.layout_adminpassword_passwordedittext)).getText().toString();
+
+                        if(password.equals(getString(R.string.adminPassword))) {
+                            executeIfValid.run();
+                        } else {
+                            showInvalidAdminPasswordMessage();
+                        }
+                    }
+                })
+                .setNegativeButton(R.string.dialog_adminrights_negativebutton, null)
+                .show();
     }
 
     @Override
@@ -742,6 +916,7 @@ public class MainActivity extends AppCompatActivity{
             pingServer();
             return true;
         } else if(id == R.id.action_settings) {
+            resetSettingsViews();
             settingsBottomSheetBehaviour.setState(BottomSheetBehavior.STATE_EXPANDED);
             return true;
         } else if(id == R.id.action_users) {
@@ -749,6 +924,9 @@ public class MainActivity extends AppCompatActivity{
             return true;
         } else if(id == R.id.action_usercount) {
             requestNameCount();
+            return true;
+        } else if(id == R.id.action_adminmessage) {
+            askForAdminPassword(sendAdminMessageRunnable);
             return true;
         }
 

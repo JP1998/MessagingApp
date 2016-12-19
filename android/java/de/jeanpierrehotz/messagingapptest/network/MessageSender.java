@@ -139,18 +139,34 @@ public class MessageSender implements Connected{
 
     /**
      * Diese Methode benachrichtigt den Server, dass der User einen neuen Namen benutzen möchte
+     *
      * @param newName der neue Name,der benutzt werden soll
      */
     public void changeName(String newName) {
         this.send(BYTECODE_CHANGENAME, newName);
     }
 
+    /**
+     * Diese Nachricht fordert die Anzahl der verbundenen Nutzer vom Server an
+     */
     public void sendNameCountRequest(){
         this.send(BYTECODE_NAMESCOUNT, null);
     }
 
+    /**
+     * Diese Methode fordert die Liste der Namen der verbundenen Nutzer vom Server an
+     */
     public void sendNamesRequest(){
         this.send(BYTECODE_NAMES, null);
+    }
+
+    /**
+     * Diese Methode sendet eine Servernachricht an den Server, der dann an alle verbundenen Nutzer gesendet wird
+     *
+     * @param msg Die Servernachricht, die
+     */
+    public void sendAdminMessage(String msg){
+        this.send(BYTECODE_SERVERMESSAGE, msg);
     }
 
     /**
