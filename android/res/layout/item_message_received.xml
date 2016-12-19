@@ -44,17 +44,15 @@
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:layout_alignParentTop="true"
-                tools:text="bitchyprincefun"
                 android:textColor="@color/receivedNameColor"
                 android:id="@+id/message_nameTextView"/>
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_toRightOf="@+id/message_timeTextView"
+                android:layout_toEndOf="@+id/message_timeTextView"
                 android:layout_below="@+id/message_nameTextView"
                 android:paddingStart="8dp"
-                tools:text="Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam"
                 android:id="@+id/messageTextView"/>
 
             <TextView
@@ -63,7 +61,6 @@
                 android:layout_alignParentStart="true"
                 android:layout_alignBottom="@+id/messageTextView"
                 android:textSize="10sp"
-                tools:text="12:34"
                 android:id="@+id/message_timeTextView"/>
 
         </RelativeLayout>

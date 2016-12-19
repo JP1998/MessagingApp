@@ -25,7 +25,10 @@
 
         <item name="android:windowBackground">@color/transparent</item>
         <item name="android:windowShowWallpaper">true</item>
+    </style>
 
+    <style name="AdminPasswordDialogTheme" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="android:background">@color/colorAdminPasswordDialogBackground</item>
     </style>
 
     <style name="AppTheme.NoActionBar">

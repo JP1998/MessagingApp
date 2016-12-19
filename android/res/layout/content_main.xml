@@ -20,6 +20,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:clipChildren="false"
     android:clipToPadding="false"
     tools:context="de.jeanpierrehotz.messagingapptest.MainActivity"
@@ -42,7 +43,6 @@
         android:layout_width="48dp"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:layout_marginRight="16dp"
         android:layout_marginEnd="16dp"
         android:id="@+id/sendBtn"
         android:src="@drawable/post_control_message"
@@ -61,8 +61,8 @@
         android:layout_alignParentBottom="true"
         android:layout_alignParentStart="true"
         android:layout_alignTop="@+id/sendBtn"
-        android:layout_toLeftOf="@+id/sendBtn"
-        android:layout_toStartOf="@+id/sendBtn">
+        android:layout_toStartOf="@+id/sendBtn"
+        app:cardCornerRadius="7dp">
 
         <EditText
             android:layout_width="match_parent"
