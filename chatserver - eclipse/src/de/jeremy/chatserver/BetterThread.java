@@ -15,7 +15,7 @@ public class BetterThread extends Thread {
 	private static final byte BYTECODE_NAMES = 5;
 	private static final byte BYTECODE_NAMESCOUNT = 6;
 
-	private final String STRING_IPADRESSE = "192.168.0.110";
+	private final String STRING_IPADRESSE = "localhost";
 	private final int INT_PORT = 1234;
 
 	private BetterClient bc;
@@ -107,6 +107,7 @@ public class BetterThread extends Thread {
 
 	public void changeName(String s) {
 		s = s.substring(6, s.length());
+		name = s;
 		try {
 			out.writeByte(BYTECODE_CHANGENAME);
 			out.writeUTF(s);

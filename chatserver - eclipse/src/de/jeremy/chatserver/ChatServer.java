@@ -149,6 +149,24 @@ public class ChatServer {
 		}
 	}
 
+	public synchronized void sendGameMessage(String name, String msg, int hashCode) throws IOException {
+
+		Socket client = clientMap.get(hashCode);
+
+		if (client != null) {
+			DataOutputStream output = new DataOutputStream(client.getOutputStream());
+			try {
+				output.writeByte(BYTECODE_MESSAGE);
+				output.writeUTF(name);
+				output.writeUTF(msg);
+				output.flush();
+			} catch (IOException e) {
+
+			}
+		}
+
+	}
+
 	public synchronized void serverMessage(String message, int hashCode, boolean showSender) {
 
 		for (Socket client : clientMap.values()) {
