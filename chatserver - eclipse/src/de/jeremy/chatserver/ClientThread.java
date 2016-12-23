@@ -14,6 +14,8 @@ public class ClientThread extends Thread {
 	private DataOutputStream output;
 	private String name;
 
+	private ChatGame game = null;
+
 	private static final byte BYTECODE_CLOSECONNECTION = -1;
 	private static final byte BYTECODE_MESSAGE = 1;
 	private static final byte BYTECODE_SERVERMESSAGE = 2;
@@ -69,8 +71,93 @@ public class ClientThread extends Thread {
 		}
 	}
 
+	private void playGame(String msg) throws IOException {
+
+		if (msg.startsWith("@game")) {
+			String name2 = "Gamemaster";
+			String[] games = { "numbergame", "flipcoin" };
+
+			if (msg.equals("@game")) { // game instrucutons
+
+				String instuctions = "How to use @game:" + "\n@game titels	displays available games"
+						+ "\n@game <titel>	starts a game" + "\n@game exit	exits the current game"
+						+ "\n@game <msg>	to communicate with the game";
+				cs.sendGameMessage(name2, instuctions, hashCode);
+
+			} else if (msg.equals("@game titels")) { // titel wahl
+
+				String titels = "Available games:";
+				for (String titel : games) {
+					titels = titels + "\n" + titel;
+				}
+
+				cs.sendGameMessage(name2, titels, hashCode);
+
+			} else if (msg.equals("@game exit")) {
+				if(game != null) cs.sendGameMessage(name2, game.getExitMessage(), hashCode);
+				else cs.sendGameMessage(name2, "No game running", hashCode);
+				game = null;
+
+			} else if (msg.startsWith("@game ")) { // check ob titel gewählt
+				for (String titel : games) { // geht durch alle titel
+					
+					if (msg.equals("@game " + titel)) { // wenn gleicher titel
+						
+						if (game == null) {
+							
+							if (titel.equals("numbergame")) {
+
+								game = new Numbergame(); //dann starte game
+								cs.sendGameMessage(name2, game.getWelcomeMessage(), hashCode);
+								return;
+								
+							}else if(titel.equals("flipcoin")){
+								game = new FlipCoin();
+								cs.sendGameMessage(name2, game.getWelcomeMessage(), hashCode);
+								return;
+							} // more games
+						}else {
+							cs.sendGameMessage(name2, game.getInstructions(), hashCode);
+							return;
+						}
+					}
+				}
+
+				if (game != null) {
+
+					String gamemessage = game.handleMessage(msg.substring(6, msg.length()));
+
+					if (gamemessage.startsWith("@game")) {
+						gamemessage = gamemessage.substring(6, gamemessage.length());
+						cs.sendGameMessage(name2, gamemessage, hashCode);
+						cs.sendGameMessage(name2, game.getExitMessage(), hashCode);
+						game = null;
+					} else {
+						cs.sendGameMessage(name2, gamemessage, hashCode);
+					}
+
+				} else {
+					cs.sendGameMessage(name2, "Please choose game first", hashCode);
+				}
+
+			} // ende ifs
+
+		}// ende if "@game"
+			
+	
+
+	}
+
 	private void userMessage() throws IOException {
 		String msg = input.readUTF();
+
+		if (msg.startsWith("@")) {
+
+			playGame(msg);
+
+			return;
+		}
+
 		System.out.println(name + cs.getInetAddress(hashCode) + " said: " + msg);
 		cs.sendMsg(msg, hashCode);
 	}
