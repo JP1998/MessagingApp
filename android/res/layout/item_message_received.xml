@@ -1,0 +1,69 @@
+<!--
+  ~     Copyright 2016 Jeremy Schiemann, Jean-Pierre Hotz
+  ~
+  ~ Licensed under the Apache License, Version 2.0 (the "License");
+  ~ you may not use this file except in compliance with the License.
+  ~ You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  -->
+
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:paddingStart="@dimen/message_padding_outer_horizontal"
+    android:paddingTop="@dimen/message_padding_outer_vertical"
+    android:paddingBottom="@dimen/message_padding_outer_vertical"
+    android:paddingEnd="@dimen/message_gap_padding">
+
+    <android.support.v7.widget.CardView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        card_view:contentPadding="@dimen/message_padding_inner"
+        card_view:cardElevation="@dimen/message_elevate"
+        card_view:cardBackgroundColor="@color/colorReceived"
+        card_view:cardCornerRadius="@dimen/message_CornerRound"
+        android:layout_alignParentStart="true">
+
+        <RelativeLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentTop="true"
+                android:textColor="@color/receivedNameColor"
+                android:id="@+id/message_nameTextView"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/message_timeTextView"
+                android:layout_below="@+id/message_nameTextView"
+                android:paddingStart="8dp"
+                android:id="@+id/messageTextView"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_alignBottom="@+id/messageTextView"
+                android:textSize="10sp"
+                android:id="@+id/message_timeTextView"/>
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.CardView>
+
+</RelativeLayout>
