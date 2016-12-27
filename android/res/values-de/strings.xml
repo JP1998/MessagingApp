@@ -42,6 +42,7 @@
     <string name="internetmessage_offline">Leider sind wir derzeit offline.</string>
     <string name="internetmessage_serverdown">Der Server scheint ausgefallen zu sein…</string>
     <string name="internetmessage_serverdown_reconnect">Verbinden</string>
+    <string name="internetmessage_serverdisconnect">Verbindung zum Server wurde getrennt.</string>
 
 
 

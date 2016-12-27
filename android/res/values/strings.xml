@@ -42,6 +42,7 @@
     <string name="internetmessage_offline">Unfortunately we\'re currently offline.</string>
     <string name="internetmessage_serverdown">The server seems to be down…</string>
     <string name="internetmessage_serverdown_reconnect">Reconnect</string>
+    <string name="internetmessage_serverdisconnect">You just disconnected from the server.</string>
 
     <string name="dateannouncement_template" translatable="false">EEEE dd. MMMM yyyy</string>
 

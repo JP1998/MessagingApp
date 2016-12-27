@@ -16,7 +16,7 @@
   -->
 
 <manifest
-    package="de.jeanpierrehotz.messagingapptest"
+    package="de.jeanpierrehotz.messaging.androidclient"
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission
