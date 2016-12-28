@@ -73,5 +73,6 @@
     <string name="dialog_adminrights_negativebutton">Abort</string>
     <string name="dialog_adminrights_passwordhint">Admin password</string>
     <string name="settingsmessage_invalidadminpassword">Wrong password.</string>
+    <string name="splashscreen_subtitle">A school project by Jeremy and Jonny.</string>
 
 </resources>
