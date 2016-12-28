@@ -20,7 +20,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * Created by Jonny on 26.12.2016.
+ *
  */
 public class ReceivedMessageListItem extends JPanel {
 
