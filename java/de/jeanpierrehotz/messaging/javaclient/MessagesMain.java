@@ -17,11 +17,11 @@
 package de.jeanpierrehotz.messaging.javaclient;
 
 import com.sun.istack.internal.Nullable;
-import de.jeanpierrehotz.messaging.javaclient.androidcompat.ErrorLogger;
 import de.jeanpierrehotz.messaging.javaclient.androidcompat.Preference;
 import de.jeanpierrehotz.messaging.javaclient.androidcompat.Snackbar;
+import de.jeanpierrehotz.messaging.javaclient.context.Context;
+import de.jeanpierrehotz.messaging.javaclient.context.R;
 import de.jeanpierrehotz.messaging.javaclient.messagescompat.MessageLoader;
-import de.jeanpierrehotz.messaging.javaclient.ui.Colors;
 import de.jeanpierrehotz.messaging.javaclient.ui.MessageListCellRenderer;
 import de.jeanpierrehotz.messaging.javaclient.ui.MessageListModel;
 import de.jeanpierrehotz.messaging.messages.Message;
@@ -47,19 +47,12 @@ import java.util.Calendar;
 /**
  *
  */
-public class MessagesMain extends JFrame {
+public class MessagesMain extends JFrame implements Context {
 
-    private static final String MESSAGES_PREFERENCE = "Messaging_Messages_SaveFile";
-    private static final String SETTINGS_PREFERENCE = "Messaging_Settings_SaveFile";
-
-    private static final String PREF_CURRENT_NAME = "private static final String PREF_CURRENT_NAME";
-    private static final String PREF_LIMIT_SAVED_MESSAGES = "private static final String PREF_LIMIT_SAVED_MESSAGES";
-    private static final String PREF_LIMIT_SAVED_MESSAGES_AMOUNT = "private static final String PREF_LIMIT_SAVED_MESSAGES_AMOUNT";
-
-    private static final String SERVER_URL = "verelpi.ddns.net";
-    private static final int SERVER_PORT = 1234;
-
-    private ErrorLogger logger;
+    /**
+     * Die Position, die für alle Snackbars eingehalten werden soll
+     */
+    private static final int SNACKBARPOSITION = Snackbar.POSITION_BOTTOM_RIGHT;
 
     /**
      * Der derzeitige UserName
@@ -79,11 +72,26 @@ public class MessagesMain extends JFrame {
      */
     private ArrayList<Message> mMessages;
 
+    /**
+     * Die Liste, die die Nachrichten anzeigt
+     */
     private JList<Message> messageList;
+    /**
+     * Weil Java kacke ist müssen wir noch n ScrollPane um die JList machen xD
+     */
     private JScrollPane messageWrapperScrollPane;
+    /**
+     * Das Modell, das Daten mit Liste verbindet (praktisch der Adapter in Android)
+     */
     private MessageListModel messageListModel;
 
+    /**
+     * Das Eingabefeld für die Nachrichten
+     */
     private JEditorPane messageEditText;
+    /**
+     * Der Button, der zum Senden da ist
+     */
     private JButton connectedCountBtn;
 
     /**
@@ -98,20 +106,20 @@ public class MessagesMain extends JFrame {
      * Der PingListener wartet auf die Nachricht, ob ein Pind erfolgreich war, oder nicht
      */
     private MessageSender.PingListener pingListener = (connectionDetected) -> {
-//          Wir zeigen dem User, ob der Ping erfolgreich war
+//      Wir zeigen dem User, ob der Ping erfolgreich war
         if(connectionDetected){
-            new Snackbar.SnackbarFactory(MessagesMain.this, "You are connected to the server.", Snackbar.LENGTH_LONG)
-                    .setBackgroundColor(Colors.i_CONNECTION_RESTORED)
-                    .setFontColor(Colors.i_CONNECTION_FONT)
-                    .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
+            new Snackbar.SnackbarFactory(MessagesMain.this, getString(R.string.pingmessage_connected), Snackbar.LENGTH_LONG)
+                    .setBackgroundColor(getIntColor(R.color.connection_restored))
+                    .setFontColor(getIntColor(R.color.connection_font))
+                    .setPosition(SNACKBARPOSITION)
                     .setRelativeTo(MessagesMain.this)
                     .create()
                     .show();
         }else{
-            new Snackbar.SnackbarFactory(MessagesMain.this, "Your connection has timed out.", Snackbar.LENGTH_LONG)
-                    .setBackgroundColor(Colors.i_CONNECTION_LOST)
-                    .setFontColor(Colors.i_CONNECTION_FONT)
-                    .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
+            new Snackbar.SnackbarFactory(MessagesMain.this, getString(R.string.pingmessage_disconnected), Snackbar.LENGTH_LONG)
+                    .setBackgroundColor(getIntColor(R.color.connection_lost))
+                    .setFontColor(getIntColor(R.color.connection_font))
+                    .setPosition(SNACKBARPOSITION)
                     .setRelativeTo(MessagesMain.this)
                     .create()
                     .show();
@@ -149,7 +157,9 @@ public class MessagesMain extends JFrame {
             new UsersListDialog(MessagesMain.this, names).setVisible(true);
         }
     };
-
+    /**
+     * Der DisconnectListener, der dem User anzeigen soll, dass die Ver¬indung unterbrochen wurde, falls das der Fall ist
+     */
     private MessageListener.OnDisconnectListener disconnectListener = new MessageListener.OnDisconnectListener() {
         @Override
         public void onDisconnect() {
@@ -157,7 +167,6 @@ public class MessagesMain extends JFrame {
             connected = false;
         }
     };
-
     /**
      * Dieser ClosingDetector frägt ab, ob der MessageListener aufhören soll auf Nachrichten zu hören.
      */
@@ -180,7 +189,7 @@ public class MessagesMain extends JFrame {
     private boolean tryingToConnect;
 
     public MessagesMain(){
-        this.setTitle("Messaging");
+        this.setTitle(getString(R.string.app_title));
 
         this.addWindowListener(new WindowAdapter() {
             @Override
@@ -192,37 +201,44 @@ public class MessagesMain extends JFrame {
 
         onCreate();
 
-        setSize(1000, 600);
+        setSize(getInt(R.integer.default_window_width), getInt(R.integer.default_window_height));
         setVisible(true);
 
         postCreate();
     }
 
+    /**
+     * Diese Methode erstellt alles nötige, bevor das Fenster sichtbar ist
+     */
     private void onCreate() {
-        logger = new ErrorLogger(getSystemFolder());
-
         setupUI();
 
-        mMessages = MessageLoader.loadMessages(new Preference(getSystemFolder(), MESSAGES_PREFERENCE));
+        mMessages = MessageLoader.loadMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)));
 
         messageListModel = new MessageListModel(mMessages);
         messageList.setCellRenderer(new MessageListCellRenderer());
         messageList.setModel(messageListModel);
 
-        Preference settingsPreference = new Preference(getSystemFolder(), SETTINGS_PREFERENCE);
+        Preference settingsPreference = new Preference(getSystemFolder(), getString(R.string.settings_preference));
 
-        currentName = settingsPreference.getString(PREF_CURRENT_NAME, "Unknown User");
-        limitSavedMessages = settingsPreference.getBoolean(PREF_LIMIT_SAVED_MESSAGES, true);
-        limitSavedMessagesAmount = settingsPreference.getInt(PREF_LIMIT_SAVED_MESSAGES_AMOUNT, 5000);
+        currentName = settingsPreference.getString(getString(R.string.pref_current_name), getString(R.string.default_username));
+        limitSavedMessages = settingsPreference.getBoolean(getString(R.string.pref_limit_saved_messages), true);
+        limitSavedMessagesAmount = settingsPreference.getInt(getString(R.string.pref_limit_saved_messages_amount), getInt(R.integer.default_messageslimitamount));
 
 
         connectToServer();
     }
 
+    /**
+     * Diese Methode stellt den Erstzustand des Fensters her
+     */
     private void postCreate() {
         scrollToMessageBottom();
     }
 
+    /**
+     * Diese Methode wird ausgeführt sobald das Fenster geschlossen wird, und speichert alle Einstellungen und so
+     */
     private void onStop() {
         if(connected) {
             try {
@@ -230,19 +246,20 @@ public class MessagesMain extends JFrame {
                 serverMessageSender.close();
                 server.close();
             } catch (IOException e){
-                logger.logThrowable(e);
+                e.printStackTrace();
             }
         }
 
         if(limitSavedMessages) {
-            MessageLoader.saveMessages(new Preference(getSystemFolder(), MESSAGES_PREFERENCE), mMessages, limitSavedMessagesAmount);
+            MessageLoader.saveMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)), mMessages, limitSavedMessagesAmount);
         } else {
-            MessageLoader.saveMessages(new Preference(getSystemFolder(), MESSAGES_PREFERENCE), mMessages);
+            MessageLoader.saveMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)), mMessages);
         }
-
-        logger.writeLog();
     }
 
+    /**
+     * Diese Methode versucht eine Verbindung zum Server aufzubauen
+     */
     private void connectToServer(){
         if(!tryingToConnect && !connected){
             tryingToConnect = true;
@@ -251,7 +268,7 @@ public class MessagesMain extends JFrame {
 //          keine Netzwerkkommunikation auf dem MainThread erlaubt
             new Thread(() -> {
                 try{
-                    server = new Socket(SERVER_URL, SERVER_PORT);
+                    server = new Socket(getString(R.string.server_url), getInt(R.integer.server_port));
 
                     serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
                     serverMessageSender.setPingListener(pingListener);
@@ -267,8 +284,7 @@ public class MessagesMain extends JFrame {
 
                     connected = true;
                 }catch(IOException e){
-                    logger.logThrowable(e);
-//                        e.printStackTrace();
+                    e.printStackTrace();
                     connected = false;
                     showDisconnectedErrorMessage();
                 }
@@ -278,6 +294,9 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode scrollt zum Boden der Nachrichten
+     */
     private void scrollToMessageBottom(){
         messageListModel.notifyDataSetChanged();
         messageWrapperScrollPane.validate();
@@ -287,7 +306,6 @@ public class MessagesMain extends JFrame {
             try{
                 bar.setValue(bar.getMaximum());
             }catch(Exception e){
-                logger.logThrowable(e);
                 e.printStackTrace();
             }
         }
@@ -307,7 +325,7 @@ public class MessagesMain extends JFrame {
 //          und keine Nachricht da ist
             if(mMessages.size() == 0 || getLastMessage() == null){
 //              fügen wir das heutige Datum definitiv als Announcement hinzu
-                addMessage(new SimpleDateFormat("EEEE dd. MMMM yyyy").format(Calendar.getInstance().getTime()), Message.Type.Announcement);
+                addMessage(new SimpleDateFormat(getString(R.string.dateannouncement_template)).format(Calendar.getInstance().getTime()), Message.Type.Announcement);
             }else{
 //              falls eine Nachricht da ist, bekommen wir deren Zeit
                 Calendar lastMessageTime = Calendar.getInstance();
@@ -318,7 +336,7 @@ public class MessagesMain extends JFrame {
 //              und falls diese nicht am selben Tag sind
                 if(notSameDay(lastMessageTime, currentTime)){
 //                  fügen wir das heutige Datum als Announcement hinzu
-                    addMessage(new SimpleDateFormat("EEEE dd. MMMM yyyy").format(Calendar.getInstance().getTime()), Message.Type.Announcement);
+                    addMessage(new SimpleDateFormat(getString(R.string.dateannouncement_template)).format(Calendar.getInstance().getTime()), Message.Type.Announcement);
                 }
             }
         }
@@ -358,18 +376,37 @@ public class MessagesMain extends JFrame {
         return null;
     }
 
+    /**
+     * Diese Methode fügt eine gegebene Nachricht des gegebenen Typs zu der Liste hinzu, zeigt diese in der Liste an,
+     * und lässt das RecyclerView zu dieser Nachricht scrollen.
+     *
+     * @param msg  Die Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
+     */
     private void addMessage(String msg, Message.Type type) {
         testForDateNeeded(type);
         mMessages.add(new Message(msg, type));
         scrollToMessageBottom();
     }
 
+    /**
+     * Diese Methode fügt eine empfangene Nachricht zu der Liste hinzu, zeigt diese in der Liste an,
+     * und lässt das RecyclerView zu dieser Nachricht scrollen.
+     *
+     * @param name Der Name des Users von dem die Nachricht stammt
+     * @param msg  Die Nachricht, die hinzugefügt werden soll
+     * @param type Der Typ der Nachricht, die hinzugefügt werden soll
+     */
     private void addReceivedMessage(String name, String msg, Message.Type type) {
         testForDateNeeded(type);
         mMessages.add(new ReceivedMessage(name, msg, type));
         scrollToMessageBottom();
     }
 
+    /**
+     * Diese Methode sendet die Nachricht, die momentan im TextFeld steht an den Server, und
+     * fügt diese zum Chat hinzu
+     */
     private void sendMessage(){
         if(!messageEditText.getText().trim().equals("")){
             if(connected){
@@ -383,6 +420,12 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode sendet den gegebenen String als Admin-/Server-Nachricht an den Server,
+     * der diese an alle verbundenen Nutzer weiterleitet.
+     *
+     * @param msg Die Nachricht, die zu versenden ist
+     */
     private void sendAdminMessage(String msg){
         if(connected) {
             serverMessageSender.sendAdminMessage(msg);
@@ -391,6 +434,9 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode leitet einen Ping des Servers ein
+     */
     private void pingServer(){
         if(connected){
             serverMessageSender.pingServer();
@@ -399,6 +445,9 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode fordert die Anzahl an verbundenen Nutzern vom Server an
+     */
     private void requestNameCount(){
         if(connected){
             serverMessageSender.sendNameCountRequest();
@@ -408,10 +457,18 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode aktualisiert die Anzahl an verbundenen Nutzern
+     *
+     * @param count die Anzahl an verbundenen Nutzern
+     */
     private void setNameCount(int count) {
-        connectedCountBtn.setText(String.format("%1$1d Users connected", count));
+        connectedCountBtn.setText(String.format(getString(R.string.connectedusers_amount_template), count));
     }
 
+    /**
+     * Diese Methode fordert eine Liste der Namen der verbundenen Nutzern vom Server an
+     */
     private void requestNames(){
         if(connected){
             serverMessageSender.sendNamesRequest();
@@ -420,38 +477,53 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Diese Methode zeigt dem User, dass er gerade keine Verbindung zu dem Server hat, woraus dieser ableiten
+     * können sollte, dass er keine Nachrichten versenden kann.
+     * Außerdem wird ihm die Möglichkeit geboten zu versuchen sich mit dem Server zu verbinden.
+     */
     private void showDisconnectedErrorMessage(){
-        new Snackbar.SnackbarFactory(this, "You have no connnection to the server.", Snackbar.LENGTH_LONG)
-                .setBackgroundColor(Colors.i_CONNECTION_LOST)
-                .setFontColor(Colors.i_CONNECTION_FONT)
-                .setActionFontColor(Colors.i_CONNECTION_ACTIONFONT)
+        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_disconnected), Snackbar.LENGTH_LONG)
+                .setBackgroundColor(getIntColor(R.color.connection_lost))
+                .setFontColor(getIntColor(R.color.connection_font))
+                .setActionFontColor(getIntColor(R.color.connection_actionfont))
                 .setRelativeTo(this)
-                .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
-                .setAction("Try reconnecting", e -> connectToServer())
+                .setPosition(SNACKBARPOSITION)
+                .setAction(getString(R.string.errormessage_disconnected_actiontext), e -> connectToServer())
                 .create()
                 .show();
     }
 
+    /**
+     * Diese Methode zeigt dem User, dass sein eingegebener Name nicht gültig ist
+     */
     private void showInvalidUserNameErrorMessage(){
-        new Snackbar.SnackbarFactory(this, "The username was invalid.", Snackbar.LENGTH_LONG)
-                .setBackgroundColor(Colors.i_CONNECTION_LOST)
-                .setFontColor(Colors.i_CONNECTION_FONT)
+        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_invalidusername), Snackbar.LENGTH_LONG)
+                .setBackgroundColor(getIntColor(R.color.connection_lost))
+                .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)
-                .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
+                .setPosition(SNACKBARPOSITION)
                 .create()
                 .show();
     }
 
+    /**
+     * Diese Methode zeigt dem User an, dass er das falsche Passwort eingegeben hat.
+     */
     private void showInvalidAdminPasswordMessage(){
-        new Snackbar.SnackbarFactory(this, "Given password is invalid", Snackbar.LENGTH_LONG)
-                .setBackgroundColor(Colors.i_ERROR_MESSAGE)
-                .setFontColor(Colors.i_CONNECTION_FONT)
+        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_invalidpassword), Snackbar.LENGTH_LONG)
+                .setBackgroundColor(getIntColor(R.color.errormessage))
+                .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)
-                .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
+                .setPosition(SNACKBARPOSITION)
                 .create()
                 .show();
     }
 
+    /**
+     * Diese Methode speichert die Einstellungen, und lässt das Einstellungs-Panel verschwinden
+     * @param dialog der Dialog, der zum Ändern der Einstellungen benutzt wurde
+     */
     private void saveSettings(SettingsDialog dialog){
         String newName = dialog.getWrittenName();
 
@@ -472,34 +544,48 @@ public class MessagesMain extends JFrame {
         limitSavedMessages = dialog.isMessagesToBeLimited();
         limitSavedMessagesAmount = dialog.getMessagesLimit();
 
-        new Preference(getSystemFolder(), SETTINGS_PREFERENCE)
+        new Preference(getSystemFolder(), getString(R.string.settings_preference))
                 .edit()
-                .putString(PREF_CURRENT_NAME, currentName)
-                .putBoolean(PREF_LIMIT_SAVED_MESSAGES, limitSavedMessages)
-                .putInt(PREF_LIMIT_SAVED_MESSAGES_AMOUNT, limitSavedMessagesAmount)
+                .putString(getString(R.string.pref_current_name), currentName)
+                .putBoolean(getString(R.string.pref_limit_saved_messages), limitSavedMessages)
+                .putInt(getString(R.string.pref_limit_saved_messages_amount), limitSavedMessagesAmount)
                 .apply();
 
         dialog.dispose();
     }
 
+    /**
+     * Diese Methode wird ausgeführt, sobald der User eine Server-Nachricht versenden möchte,
+     * und fordert diesen erst auf das Admin-Password einzugeben.
+     */
     private void sendAdminMessage(){
         new AdminPasswordDialog(this, () -> new AdminMessageDialog(this).setVisible(true)).setVisible(true);
     }
 
+    /**
+     * Diese Methode zeigt dem User seine Einstellungen, und lässt ihn diese änderV
+     */
     private void showSettings(){
         new SettingsDialog(this).setVisible(true);
     }
 
+    /**
+     * Diese Methode zeigt dem User, dass seine Verbindung zum Server gerade unterbrochen wurde.
+     * Außerdem wird ihm die Möglichkeit geboten zu versuchen sich mit dem Server zu verbinden.
+     */
     private void showDisconnectMessage() {
-        new Snackbar.SnackbarFactory(this, "You just disconnected from the server.", Snackbar.LENGTH_LONG)
-                .setBackgroundColor(Colors.i_ERROR_MESSAGE)
-                .setFontColor(Colors.i_CONNECTION_FONT)
+        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_disconnect), Snackbar.LENGTH_LONG)
+                .setBackgroundColor(getIntColor(R.color.errormessage))
+                .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)
-                .setPosition(Snackbar.POSITION_BOTTOM_MIDDLE)
+                .setPosition(SNACKBARPOSITION)
                 .create()
                 .show();
     }
 
+    /**
+     * Diese Methode initialisiert die UI
+     */
     private void setupUI(){
         setLayout(new BorderLayout());
         add(setupToolbar(), BorderLayout.NORTH);
@@ -507,49 +593,55 @@ public class MessagesMain extends JFrame {
         add(setupMessageList(), BorderLayout.CENTER);
     }
 
+    /**
+     * Diese Methode erstellt die Toolbar, und gibt diese zurück
+     *
+     * @return die erstellte Toolbar
+     */
     private JPanel setupToolbar(){
         JPanel toolbar = new JPanel(new BorderLayout());
-        toolbar.setBackground(Colors.toolbar.BACKGROUND);
+        toolbar.setBackground(getColor(R.color.primarycolor));
 
-        JLabel title = new JLabel("    Messaging");
-        title.setForeground(Colors.toolbar.FOREGROUND);
+        JLabel title = new JLabel(getString(R.string.toolbar_title));
+        title.setForeground(getColor(R.color.white));
         toolbar.add(title, BorderLayout.WEST);
 
         JPanel toolbarBtnWrapper = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        toolbarBtnWrapper.setBackground(Colors.toolbar.BACKGROUND);
+        toolbarBtnWrapper.setBackground(getColor(R.color.primarycolor));
 
-        connectedCountBtn = new JButton("0 Users connected");
+        connectedCountBtn = new JButton();
         connectedCountBtn.addActionListener(e -> requestNameCount());
-        connectedCountBtn.setBackground(Colors.toolbar.BACKGROUND);
-        connectedCountBtn.setForeground(Colors.toolbar.FOREGROUND);
+        connectedCountBtn.setBackground(getColor(R.color.primarycolor));
+        connectedCountBtn.setForeground(getColor(R.color.white));
         connectedCountBtn.setBorder(null);
         toolbarBtnWrapper.add(connectedCountBtn);
+        setNameCount(0);
 
         JButton listConnectedPeopleBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_users.png")));
         listConnectedPeopleBtn.addActionListener(e -> requestNames());
-        listConnectedPeopleBtn.setBackground(Colors.toolbar.BACKGROUND);
-        listConnectedPeopleBtn.setForeground(Colors.toolbar.FOREGROUND);
+        listConnectedPeopleBtn.setBackground(getColor(R.color.primarycolor));
+        listConnectedPeopleBtn.setForeground(getColor(R.color.white));
         listConnectedPeopleBtn.setBorder(null);
         toolbarBtnWrapper.add(listConnectedPeopleBtn);
 
         JButton sendAdminMessageBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_adminmessage.png")));
         sendAdminMessageBtn.addActionListener(e -> sendAdminMessage());
-        sendAdminMessageBtn.setBackground(Colors.toolbar.BACKGROUND);
-        sendAdminMessageBtn.setForeground(Colors.toolbar.FOREGROUND);
+        sendAdminMessageBtn.setBackground(getColor(R.color.primarycolor));
+        sendAdminMessageBtn.setForeground(getColor(R.color.white));
         sendAdminMessageBtn.setBorder(null);
         toolbarBtnWrapper.add(sendAdminMessageBtn);
 
         JButton pingServerBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_ping.png")));
         pingServerBtn.addActionListener(e -> pingServer());
-        pingServerBtn.setBackground(Colors.toolbar.BACKGROUND);
-        pingServerBtn.setForeground(Colors.toolbar.FOREGROUND);
+        pingServerBtn.setBackground(getColor(R.color.primarycolor));
+        pingServerBtn.setForeground(getColor(R.color.white));
         pingServerBtn.setBorder(null);
         toolbarBtnWrapper.add(pingServerBtn);
 
         JButton showSettingsBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_settings.png")));
         showSettingsBtn.addActionListener(e -> showSettings());
-        showSettingsBtn.setBackground(Colors.toolbar.BACKGROUND);
-        showSettingsBtn.setForeground(Colors.toolbar.FOREGROUND);
+        showSettingsBtn.setBackground(getColor(R.color.primarycolor));
+        showSettingsBtn.setForeground(getColor(R.color.white));
         showSettingsBtn.setBorder(null);
         toolbarBtnWrapper.add(showSettingsBtn);
 
@@ -557,6 +649,11 @@ public class MessagesMain extends JFrame {
         return toolbar;
     }
 
+    /**
+     * Diese Methode erstellt die Messagebar, und gibt diese zurück
+     *
+     * @return die erstellte Messagebar
+     */
     private JPanel setupMessagebar(){
         JPanel messagesWrapper = new JPanel(new BorderLayout());
 
@@ -570,7 +667,7 @@ public class MessagesMain extends JFrame {
                         e.consume();
                     } else if(e.getSource() instanceof JEditorPane) {
                         JEditorPane src = (JEditorPane) e.getSource();
-                        src.setText(src.getText() + "\n");
+                        src.setText(src.getText() + System.lineSeparator());
                     }
                 }
             }
@@ -579,15 +676,18 @@ public class MessagesMain extends JFrame {
         messagesWrapper.add(messageEditTextWrapper, BorderLayout.CENTER);
 
         JButton sendBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("post_control_message.png")));
-        sendBtn.setBackground(Colors.messagebar.SENDBUTTONBACKGROUND);
+        sendBtn.setBackground(getColor(R.color.accentcolor));
         sendBtn.addActionListener(e -> sendMessage());
         messagesWrapper.add(sendBtn, BorderLayout.EAST);
-
-        messagesWrapper.setMaximumSize(new Dimension(10000, 48));
 
         return messagesWrapper;
     }
 
+    /**
+     * Diese Methode erstellt die Nachrichtenliste, und gibt diese zurück
+     *
+     * @return die erstellte Nachrichtenliste
+     */
     private JScrollPane setupMessageList(){
         messageList = new JList<>();
 
@@ -598,24 +698,33 @@ public class MessagesMain extends JFrame {
         return messageWrapperScrollPane;
     }
 
+    /**
+     * Diese Methode gibt ihnen den absoluten Pfad des Ordners, in dem sich das derzeit ausgeführte
+     * Programm befindet
+     *
+     * @return den Ordner, in dem dieses Programm liegt
+     */
     private static String getSystemFolder() {
         return new File("").getAbsolutePath();
     }
 
+    /**
+     * Diese Methode erstellt aus dem gegebenen char-Array einen String mit dem Inhalt des Arrays
+     *
+     * @param array Das Array, aus dem man den String erstellen soll
+     * @return Der String mit dem Inhalt des Arrays
+     */
     private static String convertToString(char[] array){
-        String result = "";
-
-        for(char c : array) {
-            result += c;
-        }
-
-        return result;
+        return new String(array);
     }
 
     public static void main(String[] args) {
         new MessagesMain();
     }
 
+    /**
+     * Diese Klasse ist ein Dialog, der dem User die Einstellungen zeigt, und ihn diese verändern lässt
+     */
     private class SettingsDialog extends JDialog {
 
         private static final int WIDTH = 500;
@@ -626,7 +735,7 @@ public class MessagesMain extends JFrame {
         private JCheckBox messagesLimitCheckbox;
 
         public SettingsDialog(Frame owner) {
-            super(owner, "Settings", true);
+            super(owner, getString(R.string.dialog_settings_caption), true);
 
             this.setLayout(new BorderLayout());
 
@@ -635,12 +744,10 @@ public class MessagesMain extends JFrame {
             userNameTextField = new JTextField(currentName);
             centerWrapper.add(userNameTextField, BorderLayout.NORTH);
 
-            messagesLimitCheckbox = new JCheckBox("Limit the amount of saved messages?", limitSavedMessages);
+            messagesLimitCheckbox = new JCheckBox(getString(R.string.dialog_settings_limitmessages_hint), limitSavedMessages);
             centerWrapper.add(messagesLimitCheckbox, BorderLayout.CENTER);
 
             messagesLimitSlider = new JSlider(JSlider.HORIZONTAL, 0, 10000, limitSavedMessagesAmount);
-            messagesLimitSlider.setMajorTickSpacing(1000);
-            messagesLimitSlider.setMinorTickSpacing(200);
             centerWrapper.add(messagesLimitSlider, BorderLayout.SOUTH);
 
             this.add(centerWrapper, BorderLayout.CENTER);
@@ -651,11 +758,11 @@ public class MessagesMain extends JFrame {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-            JButton abortButton = new JButton("Abort");
+            JButton abortButton = new JButton(getString(R.string.dialog_abort));
             abortButton.addActionListener(e -> dispose());
             buttonPanel.add(abortButton);
 
-            JButton saveButton = new JButton("Save");
+            JButton saveButton = new JButton(getString(R.string.dialog_save));
             saveButton.addActionListener(e -> saveSettings(this));
             buttonPanel.add(saveButton);
 
@@ -670,27 +777,44 @@ public class MessagesMain extends JFrame {
             );
         }
 
+        /**
+         * Diese Methode gibt ihnen den Namen, der derzeitig im TextFeld steht
+         *
+         * @return der derzeitig geschriebene Benutzername
+         */
         public String getWrittenName(){
             return userNameTextField.getText();
         }
 
+        /**
+         * Diese Methode gibt ihnen, ob die Nachrichtenanzahl limitiert werden soll
+         *
+         * @return ob die Nachrichtenanzahl limitiert werden soll
+         */
         public boolean isMessagesToBeLimited(){
             return messagesLimitCheckbox.isSelected();
         }
 
+        /**
+         * Diese Methode gibt ihnen die Anzahl auf die die Nachrichtenanzahl limitiert werden soll
+         *
+         * @return die Anzahl auf die die Nachrichtenanzahl limitiert werden soll
+         */
         public int getMessagesLimit(){
             return messagesLimitSlider.getValue();
         }
-
     }
 
+    /**
+     * Dieser Dialog lässt den User eine Adminnachricht versenden.
+     */
     private class AdminMessageDialog extends JDialog {
 
         private static final int WIDTH = 300;
         private static final int HEIGHT = 100;
 
         public AdminMessageDialog(Frame owner) {
-            super(owner, "Send admin message", true);
+            super(owner, getString(R.string.dialog_adminmessage_caption), true);
 
             this.setLayout(new BorderLayout());
 
@@ -703,11 +827,11 @@ public class MessagesMain extends JFrame {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-            JButton abortButton = new JButton("Abort");
+            JButton abortButton = new JButton(getString(R.string.dialog_abort));
             abortButton.addActionListener(e -> dispose());
             buttonPanel.add(abortButton);
 
-            JButton okButton = new JButton("Send");
+            JButton okButton = new JButton(getString(R.string.dialog_send));
             okButton.addActionListener(e -> {
                 dispose();
                 if(!messageTextField.getText().trim().equals("")) {
@@ -728,45 +852,47 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Dieser Dialog lässt den User das Admin-Passwort eingeben, und führt, falls das Passwort richtig war
+     * das gegebene Runnable aus.
+     */
     private class AdminPasswordDialog extends JDialog {
 
         private static final int WIDTH = 300;
         private static final int HEIGHT = 100;
 
-        private static final String adminPassword = "overFL0W8:";
-
         public AdminPasswordDialog(Frame owner, Runnable adminExecutable) {
-            super(owner, "Admin rights required", true);
+            super(owner, getString(R.string.dialog_adminpassword_caption), true);
 
             this.setLayout(new BorderLayout());
 
             final JPasswordField passwordField = new JPasswordField();
-            passwordField.setBackground(Colors.BACKGROUND_ADMINPASSWORDDIALOG);
+            passwordField.setBackground(getColor(R.color.background_adminpassworddialog));
             this.add(passwordField, BorderLayout.CENTER);
 
             JPanel gapN = new JPanel();
-            gapN.setBackground(Colors.BACKGROUND_ADMINPASSWORDDIALOG);
+            gapN.setBackground(getColor(R.color.background_adminpassworddialog));
             this.add(gapN, BorderLayout.NORTH);
 
             JPanel gapE = new JPanel();
-            gapE.setBackground(Colors.BACKGROUND_ADMINPASSWORDDIALOG);
+            gapE.setBackground(getColor(R.color.background_adminpassworddialog));
             this.add(gapE, BorderLayout.EAST);
 
             JPanel gapW = new JPanel();
-            gapW.setBackground(Colors.BACKGROUND_ADMINPASSWORDDIALOG);
+            gapW.setBackground(getColor(R.color.background_adminpassworddialog));
             this.add(gapW, BorderLayout.WEST);
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-            buttonPanel.setBackground(Colors.BACKGROUND_ADMINPASSWORDDIALOG);
+            buttonPanel.setBackground(getColor(R.color.background_adminpassworddialog));
 
-            JButton abortButton = new JButton("Abort");
+            JButton abortButton = new JButton(getString(R.string.dialog_abort));
             abortButton.addActionListener(e -> dispose());
             buttonPanel.add(abortButton);
 
-            JButton okButton = new JButton("Ok");
+            JButton okButton = new JButton(getString(R.string.dialog_ok));
             okButton.addActionListener(e -> {
                 dispose();
-                if(convertToString(passwordField.getPassword()).equals(adminPassword)) {
+                if(convertToString(passwordField.getPassword()).equals(getString(R.string.adminpassword))) {
                     if(adminExecutable != null){
                         adminExecutable.run();
                     }
@@ -788,13 +914,16 @@ public class MessagesMain extends JFrame {
         }
     }
 
+    /**
+     * Dieser Dialog zeigt die gegebene Liste an Benutzernamen an.
+     */
     private class UsersListDialog extends JDialog {
 
         private static final int WIDTH = 500;
         private static final int HEIGHT = 350;
 
         public UsersListDialog(Frame owner, String[] userNames) {
-            super(owner, "Currently connected users", true);
+            super(owner, getString(R.string.dialog_userlist_caption), true);
 
             this.setLayout(new BorderLayout());
 
@@ -806,7 +935,7 @@ public class MessagesMain extends JFrame {
 
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-            JButton okButton = new JButton("Ok");
+            JButton okButton = new JButton(getString(R.string.dialog_ok));
             okButton.addActionListener(e -> dispose());
             buttonPanel.add(okButton);
 
