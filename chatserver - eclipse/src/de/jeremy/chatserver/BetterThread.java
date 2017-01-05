@@ -31,7 +31,7 @@ public class BetterThread extends Thread {
     private static final byte BYTECODE_NAMES = 5;
     private static final byte BYTECODE_NAMESCOUNT = 6;
 
-    private final String STRING_IPADRESSE = "192.168.178.30"/*"localhost"*/;
+    private final String STRING_IPADRESSE = "localhost";
     private final int INT_PORT = 1234;
 
     private BetterClient bc;
@@ -45,7 +45,7 @@ public class BetterThread extends Thread {
     public BetterThread(BetterClient bc) {
         this.bc = bc;
         done = false;
-        name = "Jonny Java Client LUL";
+        name = "Jeremy";
         try {
             client = new Socket(STRING_IPADRESSE, INT_PORT);
             in = new DataInputStream(client.getInputStream());
