@@ -107,7 +107,7 @@ public class MessageListener extends Thread implements Connected{
      *
      * @param listener der Listener, der auf Disconnects warten soll
      */
-    public void setOnDisconnectListener(OnDisconnectListener listener) { // TODO:
+    public void setOnDisconnectListener(OnDisconnectListener listener) {
         this.disconnectListener = listener;
     }
 
@@ -194,13 +194,6 @@ public class MessageListener extends Thread implements Connected{
                     }
                     connected = false;
                 }
-
-////              wir warten 10ms zwischen den Loops
-//                try{
-//                    Thread.sleep(10);
-//                }catch(Exception e){
-//                    e.printStackTrace();
-//                }
             }
 
 //          sobald der Listener terminieren soll schließen wir dessen Stream
