@@ -63,7 +63,7 @@ public class MessageListener extends Thread implements Connected{
     /**
      * Der OnDisconnectListener, der den User benachrichtigt, sobald wir disconnecten
      */
-    private OnDisconnectListener disconnectListener; // TODO:
+    private OnDisconnectListener disconnectListener;
 
     /**
      * Der MessageSender, der für die Ping-Funktion an diesen MessageListener gebunden wurde
@@ -107,7 +107,7 @@ public class MessageListener extends Thread implements Connected{
      *
      * @param listener der Listener, der auf Disconnects warten soll
      */
-    public void setOnDisconnectListener(OnDisconnectListener listener) { // TODO:
+    public void setOnDisconnectListener(OnDisconnectListener listener) {
         this.disconnectListener = listener;
     }
 
@@ -133,9 +133,9 @@ public class MessageListener extends Thread implements Connected{
 //      falls wir eine Terminierungsbedingung haben
         if(closingDetector != null){
 //          loopen wir den Thread
-            boolean connected = true; // TODO:
+            boolean connected = true;
             Thread currThr = Thread.currentThread();
-            while(closingDetector.isNotToBeClosed(currThr) && connected){ // TODO:
+            while(closingDetector.isNotToBeClosed(currThr) && connected){
                 try{
                     byte readByte = input.readByte();
 
@@ -188,19 +188,11 @@ public class MessageListener extends Thread implements Connected{
                         }
                     }
                 }catch(IOException e){
-//                    e.printStackTrace();
-                    if(disconnectListener != null) { // TODO: Add disconnect listener
+                    if(disconnectListener != null) {
                         disconnectListener.onDisconnect();
                     }
                     connected = false;
                 }
-
-////              wir warten 10ms zwischen den Loops TODO: Remove time-out
-//                try{
-//                    Thread.sleep(10);
-//                }catch(Exception e){
-//                    e.printStackTrace();
-//                }
             }
 
 //          sobald der Listener terminieren soll schließen wir dessen Stream
@@ -255,7 +247,7 @@ public class MessageListener extends Thread implements Connected{
     /**
      * Dieses Interface gibt ihnen die Möglichkeit auf Disconnects zu reagieren
      */
-    public interface OnDisconnectListener{ // TODO:
+    public interface OnDisconnectListener{
 
         /**
          * Diese Methode wird ausgeführt, sobald ein Disconnect erkannt wurde

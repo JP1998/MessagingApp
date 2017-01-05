@@ -368,25 +368,28 @@ public class MainActivity extends AppCompatActivity{
 
         mSendEditText = (EditText) findViewById(R.id.sendEditText);
 
-        tryingToConnect = false;
-
-//      we'll check for internet, and if there is any, we'll start the connectivity
-//      if not we'll simply state that we're offline
-        if(isInternetConnectionAvailable()){
-            online = true;
-            connectToServer();
-        }else{
-            online = false;
-        }
-
-//      and we'll set up the NetworkCallback that is to reconnect us as soon as possible
-        ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).registerNetworkCallback(
-                new NetworkRequest.Builder().build(),
-                internetCallback
-        );
+        startUpConnection();
 
 //      Zum Schluss initialisieren wir die Funktion, mit der wir den FloatingActionButton dragbar machen :D
         buildFollowingFun();
+    }
+
+    @Override
+    protected void onStop(){
+        super.onStop();
+
+        if(limitSavedMessages) {
+            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages, limitSavedMessagesAmount);
+        } else {
+            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        safelyDisconnect();
     }
 
     /**
@@ -422,9 +425,12 @@ public class MainActivity extends AppCompatActivity{
         fabSpringY.addListener(cvImitatorY);
     }
 
-    @Override
-    protected void onResume(){
-        super.onResume();
+    /**
+     * This method checks for internet and if needed tries to connect to the server
+     */
+    private void startUpConnection(){
+        serverReached = false;
+        tryingToConnect = false;
 
 //      we'll check for internet, and if there is any, we'll start the connectivity
 //      if not we'll simply state that we're offline
@@ -434,6 +440,7 @@ public class MainActivity extends AppCompatActivity{
         }else{
             online = false;
         }
+
 
 //      and we'll set up the NetworkCallback that is to reconnect us as soon as possible
         ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).registerNetworkCallback(
@@ -480,6 +487,7 @@ public class MainActivity extends AppCompatActivity{
                         serverMessageListener.setClosingDetector(closingDetector);
                         serverMessageListener.setOnMessageReceivedListener(receivedListener);
                         serverMessageListener.bindMessageSender(serverMessageSender);
+                        serverMessageListener.setOnDisconnectListener(disconnectListener);
                         serverMessageListener.start();
 
                         serverMessageSender.changeName(currentName);
@@ -499,27 +507,17 @@ public class MainActivity extends AppCompatActivity{
         }
     }
 
-    @Override
-    protected void onStop(){
-        super.onStop();
-
+    /**
+     * Diese Methode versucht die Verbindung zum Server gesichert zu schließen
+     */
+    private void safelyDisconnect(){
         if(online && serverReached){
-            try{
-//              Sobald die Activity endet lassen wir den MessageListener auslaufen, indem wir serverMessageListener auf null setzen,
-//              wodurch closingDetector#isNotToBeClosed(Thread) auf false gesetzt wird
-                serverMessageListener = null;
-//              Und schließen alle Streams
-                server.close();
-                serverMessageSender.close();
-            }catch(IOException e){
-                e.printStackTrace();
-            }
-        }
-
-        if(limitSavedMessages) {
-            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages, limitSavedMessagesAmount);
-        } else {
-            MessageLoader.saveMessages(getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE), mMessages);
+//          Sobald die Activity endet lassen wir den MessageListener auslaufen, indem wir serverMessageListener auf null setzen,
+//          wodurch closingDetector#isNotToBeClosed(Thread) auf false gesetzt wird
+            serverMessageListener = null;
+//          Und schließen alle Streams
+            serverMessageSender.close();
+            serverReached = false;
         }
     }
 
@@ -930,6 +928,14 @@ public class MainActivity extends AppCompatActivity{
                 .show();
     }
 
+    /**
+     * Diese Methode löscht alle Nachrichten
+     */
+    private void deleteMessages() {
+        mMessages.clear();
+        mMessagesAdapter.notifyDataSetChanged();
+    }
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
 //      Handle action bar item clicks here. The action bar will
@@ -954,6 +960,8 @@ public class MainActivity extends AppCompatActivity{
         } else if(id == R.id.action_adminmessage) {
             askForAdminPassword(sendAdminMessageRunnable);
             return true;
+        } else if(id == R.id.action_deletemessages) {
+            deleteMessages();
         }
 
         return super.onOptionsItemSelected(item);

@@ -44,9 +44,6 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 
-/**
- *
- */
 public class MessagesMain extends JFrame implements Context {
 
     /**
@@ -164,6 +161,7 @@ public class MessagesMain extends JFrame implements Context {
         @Override
         public void onDisconnect() {
             showDisconnectMessage();
+            setNameCount(0);
             connected = false;
         }
     };
@@ -241,13 +239,8 @@ public class MessagesMain extends JFrame implements Context {
      */
     private void onStop() {
         if(connected) {
-            try {
-                serverMessageListener = null;
-                serverMessageSender.close();
-                server.close();
-            } catch (IOException e){
-                e.printStackTrace();
-            }
+            serverMessageListener = null;
+            serverMessageSender.close();
         }
 
         if(limitSavedMessages) {
@@ -563,10 +556,18 @@ public class MessagesMain extends JFrame implements Context {
     }
 
     /**
-     * Diese Methode zeigt dem User seine Einstellungen, und lässt ihn diese änderV
+     * Diese Methode zeigt dem User seine Einstellungen, und lässt ihn diese ändern
      */
     private void showSettings(){
         new SettingsDialog(this).setVisible(true);
+    }
+
+    /**
+     * Diese Methode löscht alle Nachrichten
+     */
+    private void deleteMessages(){
+        mMessages.clear();
+        messageListModel.notifyDataSetChanged();
     }
 
     /**
@@ -644,6 +645,13 @@ public class MessagesMain extends JFrame implements Context {
         showSettingsBtn.setForeground(getColor(R.color.white));
         showSettingsBtn.setBorder(null);
         toolbarBtnWrapper.add(showSettingsBtn);
+
+        JButton deleteMessagesBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_deletemessages.png")));
+        deleteMessagesBtn.addActionListener(e -> deleteMessages());
+        deleteMessagesBtn.setBackground(getColor(R.color.primarycolor));
+        deleteMessagesBtn.setForeground(getColor(R.color.white));
+        deleteMessagesBtn.setBorder(null);
+        toolbarBtnWrapper.add(deleteMessagesBtn);
 
         toolbar.add(toolbarBtnWrapper, BorderLayout.EAST);
         return toolbar;
