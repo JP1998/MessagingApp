@@ -31,10 +31,8 @@ import de.jeanpierrehotz.messaging.network.MessageSender;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.File;
@@ -261,7 +259,7 @@ public class MessagesMain extends JFrame implements Context {
 //          keine Netzwerkkommunikation auf dem MainThread erlaubt
             new Thread(() -> {
                 try{
-                    server = new Socket(getString(R.string.server_url), getInt(R.integer.server_port));
+                    server = new Socket("192.168.178.30"/*getString(R.string.server_url)*/, getInt(R.integer.server_port));
 
                     serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
                     serverMessageSender.setPingListener(pingListener);
@@ -699,9 +697,22 @@ public class MessagesMain extends JFrame implements Context {
     private JScrollPane setupMessageList(){
         messageList = new JList<>();
 
+        MouseAdapter adapt = new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+
+                messageListModel.notifyDataSetChanged();
+                messageWrapperScrollPane.validate();
+            }
+        };
+
         messageWrapperScrollPane = new JScrollPane(messageList, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
         messageWrapperScrollPane.setViewportBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         messageWrapperScrollPane.setWheelScrollingEnabled(true);
+
+        messageWrapperScrollPane.addMouseListener(adapt);
+        messageList.addMouseListener(adapt);
 
         return messageWrapperScrollPane;
     }
