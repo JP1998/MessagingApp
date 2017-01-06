@@ -259,7 +259,7 @@ public class MessagesMain extends JFrame implements Context {
 //          keine Netzwerkkommunikation auf dem MainThread erlaubt
             new Thread(() -> {
                 try{
-                    server = new Socket("192.168.178.30"/*getString(R.string.server_url)*/, getInt(R.integer.server_port));
+                    server = new Socket(getString(R.string.server_url), getInt(R.integer.server_port));
 
                     serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
                     serverMessageSender.setPingListener(pingListener);
