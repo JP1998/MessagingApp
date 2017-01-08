@@ -28,11 +28,15 @@
     <string name="settings_limitsavedmessageshint">Limit saved messages?</string>
     <string name="settings_limitsavedmessagesamountcaption">Amount of messages to save</string>
     <string name="limitsavedmessagesamount_template">%1$1d</string>
+    <string name="settingsmessage_invalidadminpassword">Wrong password.</string>
+    <string name="splashscreen_subtitle">A school project by Jeremy and Jonny.</string>
 
     <string name="action_pingserver">Ping Server</string>
     <string name="action_showsettings">Settings</string>
     <string name="action_users">User list</string>
     <string name="action_adminmessage">Send admin message</string>
+    <string name="action_deletemessages">Delete messages</string>
+    <string name="action_serversettings">Server settings</string>
 
     <string name="pingresult_connected">Connection to the server is established.</string>
     <string name="pingresult_timedout">The connection to the server has timed out.</string>
@@ -46,16 +50,19 @@
 
     <string name="dateannouncement_template" translatable="false">EEEE dd. MMMM yyyy</string>
 
-    <string name="serverinfo_url" translatable="false">verelpi.ddns.net</string>
-    <integer name="serverinfo_port">1234</integer>
+    <string name="serverinformation_defaultadress" translatable="false">verelpi.ddns.net</string>
+    <integer name="serverinformation_defaultport">1234</integer>
     <string name="adminPassword" translatable="false">overFL0W8:</string>
 
     <string name="prefs_settings_preference" translatable="false">SharedPreferences prefs = getSharedPreferences(getString(R.string.prefs_settings_preference), MODE_PRIVATE);</string>
     <string name="prefs_settings_firstLaunch" translatable="false">if(prefs.getBoolean(getString(R.string.prefs_settings_firstLaunch), true)) {</string>
     <string name="prefs_settings_currentname" translatable="false">currentName = prefs.getString(getString(R.string.prefs_settings_currentname), getString(R.string.defaultUserName));</string>
-    <string name="prefs_messages" translatable="false">MessageLoader.saveMessages(mMessages, getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE));</string>
     <string name="prefs_settings_limitsavedmessages" translatable="false">limitSavedMessages = prefs.getBoolean(getString(R.string.prefs_settings_limitsavedmessages), true);</string>
     <string name="prefs_settings_limitsavedmessagesamount" translatable="false">limitSavedMessagesAmount = prefs.getInt(getString(R.string.prefs_settings_limitsavedmessagesamount), 2500);</string>
+    <string name="prefs_messages" translatable="false">MessageLoader.saveMessages(mMessages, getSharedPreferences(getString(R.string.prefs_messages), MODE_PRIVATE));</string>
+    <string name="prefs_serverinformation" translatable="false">SharedPreferences serverPreferences = getSharedPreferences(getString(R.string.prefs_serverinformation), MODE_PRIVATE);</string>
+    <string name="prefs_serverinformation_serveradress" translatable="false">serverPreferences.getString(getString(R.string.prefs_serverinformation_serveradress), getString(R.string.serverinformation_defaultadress)),</string>
+    <string name="prefs_serverinformation_serverport" translatable="false">serverPreferences.getInt(getString(R.string.prefs_serverinformation_serverport), getResources().getInteger(R.integer.serverinformation_defaultport))</string>
 
     <string name="usercount_default_condensed">0</string>
     <string name="usercount_default">0 Users connected</string>
@@ -72,8 +79,12 @@
     <string name="dialog_adminrights_positivebutton">Submit</string>
     <string name="dialog_adminrights_negativebutton">Abort</string>
     <string name="dialog_adminrights_passwordhint">Admin password</string>
-    <string name="settingsmessage_invalidadminpassword">Wrong password.</string>
-    <string name="splashscreen_subtitle">A school project by Jeremy and Jonny.</string>
-    <string name="delete_messages">Delete messages</string>
+
+    <string name="dialog_serversettings_caption">Server settings</string>
+    <string name="dialog_serversettings_positive">Apply</string>
+    <string name="dialog_serversettings_negative">Dismiss</string>
+    <string name="dialog_serversettings_warning">WARNING: You should only change these values, if you know what you\'re doing, or you were told to do so by someone who knows what he\'s doing.\nA change of these values will be irreversible, and might make the application not work properly anymore.</string>
+    <string name="dialog_serversettings_adresshint">Server IP / Adress</string>
+    <string name="dialog_serversettings_porthint">Server Port</string>
 
 </resources>

@@ -36,7 +36,7 @@ public class R{
         public static final int pref_current_name = 2;
         public static final int pref_limit_saved_messages = 3;
         public static final int pref_limit_saved_messages_amount = 4;
-        public static final int server_url = 5;
+        public static final int serverinformation_defaultadress = 5;
         public static final int pingmessage_connected = 6;
         public static final int pingmessage_disconnected = 7;
         public static final int app_title = 8;
@@ -59,6 +59,11 @@ public class R{
         public static final int dialog_adminpassword_caption = 25;
         public static final int dialog_ok = 26;
         public static final int dialog_userlist_caption = 27;
+        public static final int serverinfo_preference = 28;
+        public static final int prefs_serverinformation_serveradress = 29;
+        public static final int prefs_serverinformation_serverport = 30;
+        public static final int dialog_serversettings_caption = 31;
+        public static final int dialog_serversettings_warning = 32;
     }
 
     /**
@@ -69,7 +74,7 @@ public class R{
      * </code></pre>
      */
     public static class integer{
-        public static final int server_port = 0;
+        public static final int serverinformation_defaultport = 0;
         public static final int default_messageslimitamount = 1;
         public static final int default_window_width = 2;
         public static final int default_window_height = 3;

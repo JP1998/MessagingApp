@@ -49,9 +49,14 @@ class Strings{
             "Admin rights required",
             "Ok",
             "Currently connected users",
+            "Messaging_Serversettings",
+            "prefs_serverinformation_serveradress",
+            "prefs_serverinformation_serverport",
+            "Server Settings",
+            "WARNING: You should only change these values, if you know what you\'re doing, or you were told to do so by someone who knows what he\'s doing.\nA change of these values will be irreversible, and might make the application not work properly anymore.",
     };
 
-     public static final String[] de = {
+    public static final String[] de = {
             "Messaging_Messages_SaveFile",
             "Messaging_Settings_SaveFile",
             "private static final String PREF_CURRENT_NAME",
@@ -80,5 +85,10 @@ class Strings{
             "Adminrechte erforderlich",
             "Ok",
             "Verbundene Nutzer",
+            "Messaging_Serversettings",
+            "prefs_serverinformation_serveradress",
+            "prefs_serverinformation_serverport",
+            "Servereinstellungen",
+            "WARNUNG: Sie sollten diese Werte ausschließlich verändern, falls Sie wissen, was Sie tun, oder von jemandem, der weiß, was er tut, dazu angewiesen wurden.\nEine Veränderung dieser Werte ist irreversibel, und könnte die Applikation nutzlos machen.",
     };
 }

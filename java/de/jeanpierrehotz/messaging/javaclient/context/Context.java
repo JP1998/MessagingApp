@@ -15,7 +15,10 @@
  */
 package de.jeanpierrehotz.messaging.javaclient.context;
 
+import de.jeanpierrehotz.messaging.javaclient.androidcompat.Preference;
+
 import java.awt.Color;
+import java.io.File;
 import java.util.Locale;
 
 /**
@@ -86,5 +89,22 @@ public interface Context{
             return Colors.values[id];
         else
             return -1;
+    }
+
+    /**
+     * This method gives you the absolute path to the folder in which the program is currently being executed
+     * @return the folder this program resides in
+     */
+    default String getSystemFolder(){
+        return new File("").getAbsolutePath();
+    }
+
+    /**
+     * This method gives you the same result as {@code new de.jeanpierrehotz.messaging.javaclient.androidcompat.Preference(getSystemFolder(), getString(res));}
+     * @param res the result to use for the preference name
+     * @return the preference in the current system folder with the name determined by the given string ressource
+     */
+    default Preference getSharedPreference(int res){
+        return new Preference(getSystemFolder(), getString(res));
     }
 }

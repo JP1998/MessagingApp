@@ -32,10 +32,8 @@ import de.jeanpierrehotz.messaging.network.MessageSender;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.image.BufferedImage;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
@@ -209,13 +207,13 @@ public class MessagesMain extends JFrame implements Context {
     private void onCreate() {
         setupUI();
 
-        mMessages = MessageLoader.loadMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)));
+        mMessages = MessageLoader.loadMessages(getSharedPreference(R.string.messages_preference));
 
         messageListModel = new MessageListModel(mMessages);
         messageList.setCellRenderer(new MessageListCellRenderer());
         messageList.setModel(messageListModel);
 
-        Preference settingsPreference = new Preference(getSystemFolder(), getString(R.string.settings_preference));
+        Preference settingsPreference = getSharedPreference(R.string.settings_preference);
 
         currentName = settingsPreference.getString(getString(R.string.pref_current_name), getString(R.string.default_username));
         limitSavedMessages = settingsPreference.getBoolean(getString(R.string.pref_limit_saved_messages), true);
@@ -236,15 +234,12 @@ public class MessagesMain extends JFrame implements Context {
      * Diese Methode wird ausgef¸hrt sobald das Fenster geschlossen wird, und speichert alle Einstellungen und so
      */
     private void onStop() {
-        if(connected) {
-            serverMessageListener = null;
-            serverMessageSender.close();
-        }
+        safelyDisconnect();
 
         if(limitSavedMessages) {
-            MessageLoader.saveMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)), mMessages, limitSavedMessagesAmount);
+            MessageLoader.saveMessages(getSharedPreference(R.string.messages_preference), mMessages, limitSavedMessagesAmount);
         } else {
-            MessageLoader.saveMessages(new Preference(getSystemFolder(), getString(R.string.messages_preference)), mMessages);
+            MessageLoader.saveMessages(getSharedPreference(R.string.messages_preference), mMessages);
         }
     }
 
@@ -259,7 +254,12 @@ public class MessagesMain extends JFrame implements Context {
 //          keine Netzwerkkommunikation auf dem MainThread erlaubt
             new Thread(() -> {
                 try{
-                    server = new Socket(getString(R.string.server_url), getInt(R.integer.server_port));
+                    Preference serverPreference = getSharedPreference(R.string.serverinfo_preference);
+                    
+                    server = new Socket(
+                            serverPreference.getString(getString(R.string.prefs_serverinformation_serveradress), getString(R.string.serverinformation_defaultadress)),
+                            serverPreference.getInt(getString(R.string.prefs_serverinformation_serverport), getInt(R.integer.serverinformation_defaultport))
+                    );
 
                     serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
                     serverMessageSender.setPingListener(pingListener);
@@ -282,6 +282,17 @@ public class MessagesMain extends JFrame implements Context {
 
                 tryingToConnect = false;
             }).start();
+        }
+    }
+
+    /**
+     * Diese Methode versucht die Verbindung zum Server gesichert zu schlieﬂen
+     */
+    private void safelyDisconnect(){
+        if(connected) {
+            serverMessageListener = null;
+            serverMessageSender.close();
+            connected = false;
         }
     }
 
@@ -535,7 +546,7 @@ public class MessagesMain extends JFrame implements Context {
         limitSavedMessages = dialog.isMessagesToBeLimited();
         limitSavedMessagesAmount = dialog.getMessagesLimit();
 
-        new Preference(getSystemFolder(), getString(R.string.settings_preference))
+        getSharedPreference(R.string.settings_preference)
                 .edit()
                 .putString(getString(R.string.pref_current_name), currentName)
                 .putBoolean(getString(R.string.pref_limit_saved_messages), limitSavedMessages)
@@ -543,6 +554,50 @@ public class MessagesMain extends JFrame implements Context {
                 .apply();
 
         dialog.dispose();
+    }
+
+    private void saveServerSettings(ServerSettingsDialog dialog){
+        safelyDisconnect();
+
+        Preference serverPreferences = getSharedPreference(R.string.serverinfo_preference);
+
+        String newAdress = dialog.getAdressString();
+
+        int newPort;
+        int oldPort = serverPreferences.getInt(getString(R.string.prefs_serverinformation_serverport), getInt(R.integer.serverinformation_defaultport));
+
+        try {
+            newPort = Integer.parseInt(dialog.getPortString());
+
+            if(newPort < 0 || newPort > 65535) {
+                // invalid port
+                serverPreferences
+                        .edit()
+                        .putString(getString(R.string.prefs_serverinformation_serveradress), newAdress)
+                        .putInt(getString(R.string.prefs_serverinformation_serverport), oldPort)
+                        .apply();
+
+            } else {
+                //valid port
+                serverPreferences
+                        .edit()
+                        .putString(getString(R.string.prefs_serverinformation_serveradress), newAdress)
+                        .putInt(getString(R.string.prefs_serverinformation_serverport), newPort)
+                        .apply();
+
+            }
+        } catch (Exception e) {
+            // invalid port
+            serverPreferences
+                    .edit()
+                    .putString(getString(R.string.prefs_serverinformation_serveradress), newAdress)
+                    .putInt(getString(R.string.prefs_serverinformation_serverport), oldPort)
+                    .apply();
+
+        }
+
+        dialog.dispose();
+        connectToServer();
     }
 
     /**
@@ -558,6 +613,13 @@ public class MessagesMain extends JFrame implements Context {
      */
     private void showSettings(){
         new SettingsDialog(this).setVisible(true);
+    }
+
+    /**
+     * Diese Methode zeigt dem User seine Servereinstellungen, und l‰sst ihn diese ‰ndern
+     */
+    private void showServersettings(){
+        new ServerSettingsDialog(this).setVisible(true);
     }
 
     /**
@@ -637,6 +699,13 @@ public class MessagesMain extends JFrame implements Context {
         pingServerBtn.setBorder(null);
         toolbarBtnWrapper.add(pingServerBtn);
 
+        JButton deleteMessagesBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_deletemessages.png")));
+        deleteMessagesBtn.addActionListener(e -> deleteMessages());
+        deleteMessagesBtn.setBackground(getColor(R.color.primarycolor));
+        deleteMessagesBtn.setForeground(getColor(R.color.white));
+        deleteMessagesBtn.setBorder(null);
+        toolbarBtnWrapper.add(deleteMessagesBtn);
+
         JButton showSettingsBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_settings.png")));
         showSettingsBtn.addActionListener(e -> showSettings());
         showSettingsBtn.setBackground(getColor(R.color.primarycolor));
@@ -644,12 +713,12 @@ public class MessagesMain extends JFrame implements Context {
         showSettingsBtn.setBorder(null);
         toolbarBtnWrapper.add(showSettingsBtn);
 
-        JButton deleteMessagesBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_deletemessages.png")));
-        deleteMessagesBtn.addActionListener(e -> deleteMessages());
-        deleteMessagesBtn.setBackground(getColor(R.color.primarycolor));
-        deleteMessagesBtn.setForeground(getColor(R.color.white));
-        deleteMessagesBtn.setBorder(null);
-        toolbarBtnWrapper.add(deleteMessagesBtn);
+        JButton showServersettingsBtn = new JButton(new ImageIcon(MessagesMain.class.getResource("ic_serversettings.png")));
+        showServersettingsBtn.addActionListener(e -> showServersettings());
+        showServersettingsBtn.setBackground(getColor(R.color.primarycolor));
+        showServersettingsBtn.setForeground(getColor(R.color.white));
+        showServersettingsBtn.setBorder(null);
+        toolbarBtnWrapper.add(showServersettingsBtn);
 
         toolbar.add(toolbarBtnWrapper, BorderLayout.EAST);
         return toolbar;
@@ -718,16 +787,6 @@ public class MessagesMain extends JFrame implements Context {
     }
 
     /**
-     * Diese Methode gibt ihnen den absoluten Pfad des Ordners, in dem sich das derzeit ausgef¸hrte
-     * Programm befindet
-     *
-     * @return den Ordner, in dem dieses Programm liegt
-     */
-    private static String getSystemFolder() {
-        return new File("").getAbsolutePath();
-    }
-
-    /**
      * Diese Methode erstellt aus dem gegebenen char-Array einen String mit dem Inhalt des Arrays
      *
      * @param array Das Array, aus dem man den String erstellen soll
@@ -739,6 +798,86 @@ public class MessagesMain extends JFrame implements Context {
 
     public static void main(String[] args) {
         new MessagesMain();
+    }
+
+    private class ServerSettingsDialog extends JDialog {
+
+        private static final int WIDTH = 500;
+        private static final int HEIGHT = 190;
+
+        private JTextField serverAdressTextField;
+        private JTextField serverPortTextField;
+
+        private JTextArea warningMessageTextArea;
+
+        public ServerSettingsDialog(Frame owner) {
+            super(owner, getString(R.string.dialog_serversettings_caption), true);
+
+            Preference serverSettingsPreference = getSharedPreference(R.string.serverinfo_preference);
+
+            this.setLayout(new BorderLayout());
+
+            JPanel centerWrapper = new JPanel();
+            centerWrapper.setLayout(new BoxLayout(centerWrapper, BoxLayout.Y_AXIS));
+
+            this.warningMessageTextArea = new JTextArea(getString(R.string.dialog_serversettings_warning));
+            this.warningMessageTextArea.setBackground(getColor(R.color.background_adminpassworddialog));
+            this.warningMessageTextArea.setEditable(false);
+            this.warningMessageTextArea.setLineWrap(true);
+            this.warningMessageTextArea.setWrapStyleWord(true);
+            centerWrapper.add(this.warningMessageTextArea);
+
+            this.serverAdressTextField = new JTextField(serverSettingsPreference.getString(getString(R.string.prefs_serverinformation_serveradress), getString(R.string.serverinformation_defaultadress)));
+            this.serverAdressTextField.setBackground(getColor(R.color.background_adminpassworddialog));
+            centerWrapper.add(this.serverAdressTextField);
+
+            this.serverPortTextField = new JTextField("" + serverSettingsPreference.getInt(getString(R.string.prefs_serverinformation_serverport), getInt(R.integer.serverinformation_defaultport)));
+            this.serverPortTextField.setBackground(getColor(R.color.background_adminpassworddialog));
+            centerWrapper.add(this.serverPortTextField);
+
+            this.add(centerWrapper, BorderLayout.CENTER);
+
+            JPanel gapN = new JPanel();
+            gapN.setBackground(getColor(R.color.background_adminpassworddialog));
+            this.add(gapN, BorderLayout.NORTH);
+
+            JPanel gapE = new JPanel();
+            gapE.setBackground(getColor(R.color.background_adminpassworddialog));
+            this.add(gapE, BorderLayout.EAST);
+
+            JPanel gapW = new JPanel();
+            gapW.setBackground(getColor(R.color.background_adminpassworddialog));
+            this.add(gapW, BorderLayout.WEST);
+
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            buttonPanel.setBackground(getColor(R.color.background_adminpassworddialog));
+
+            JButton abortButton = new JButton(getString(R.string.dialog_abort));
+            abortButton.addActionListener(e -> dispose());
+            buttonPanel.add(abortButton);
+
+            JButton okButton = new JButton(getString(R.string.dialog_ok));
+            okButton.addActionListener(e -> saveServerSettings(this));
+            buttonPanel.add(okButton);
+
+            this.add(buttonPanel, BorderLayout.SOUTH);
+
+            this.setResizable(false);
+            this.setBounds(
+                    owner.getX() + (owner.getWidth() - WIDTH) / 2,
+                    owner.getY() + (owner.getHeight() - HEIGHT) / 2,
+                    WIDTH,
+                    HEIGHT
+            );
+        }
+
+        public String getAdressString(){
+            return serverAdressTextField.getText();
+        }
+
+        public String getPortString(){
+            return serverPortTextField.getText();
+        }
     }
 
     /**

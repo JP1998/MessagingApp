@@ -24,6 +24,7 @@ import android.net.Network;
 import android.net.NetworkRequest;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.annotation.StringDef;
 import android.support.design.widget.BottomSheetBehavior;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -244,6 +245,7 @@ public class MainActivity extends AppCompatActivity{
         @Override
         public void onDisconnect() {
             showDisconnectMessage();
+            setNameCount(0);
             serverReached = false;
         }
     };
@@ -478,7 +480,12 @@ public class MainActivity extends AppCompatActivity{
                 @Override
                 public void run(){
                     try{
-                        server = new Socket(getString(R.string.serverinfo_url), getResources().getInteger(R.integer.serverinfo_port));
+                        SharedPreferences serverPreferences = getSharedPreferences(getString(R.string.prefs_serverinformation), MODE_PRIVATE);
+
+                        server = new Socket(
+                                serverPreferences.getString(getString(R.string.prefs_serverinformation_serveradress), getString(R.string.serverinformation_defaultadress)),
+                                serverPreferences.getInt(getString(R.string.prefs_serverinformation_serverport), getResources().getInteger(R.integer.serverinformation_defaultport))
+                        );
 
                         serverMessageSender = new MessageSender(new DataOutputStream(server.getOutputStream()));
                         serverMessageSender.setPingListener(pingListener);
@@ -936,6 +943,69 @@ public class MainActivity extends AppCompatActivity{
         mMessagesAdapter.notifyDataSetChanged();
     }
 
+    /**
+     * Dieses Runnable gibt dem User die Möglichkeit über einen Dialog die ServereinstellungeV zu änderV
+     */
+    private Runnable changeServerSettings = new Runnable() {
+
+        /**
+         * Der eigentliche Dialog
+         */
+        private AlertDialog mSettingsDialog;
+
+        @Override
+        public void run() {
+            mSettingsDialog = new AlertDialog.Builder(MainActivity.this, R.style.AdminPasswordDialogTheme)
+                    .setTitle(R.string.dialog_serversettings_caption)
+                    .setView(R.layout.layout_dialog_serversettings)
+                    .setPositiveButton(R.string.dialog_serversettings_positive, new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            safelyDisconnect();
+
+                            SharedPreferences serverPreferences = getSharedPreferences(getString(R.string.prefs_serverinformation), MODE_PRIVATE);
+
+                            String newAdress = ((EditText) mSettingsDialog.findViewById(R.id.layout_dialog_serversettings_serverAdressTextField)).getText().toString();
+
+                            int newPort;
+                            int oldPort = serverPreferences.getInt(getString(R.string.prefs_serverinformation_serverport), getResources().getInteger(R.integer.serverinformation_defaultport));
+
+                            try {
+                                newPort = Integer.parseInt(((EditText) mSettingsDialog.findViewById(R.id.layout_dialog_serversettings_serverPortTextField)).getText().toString());
+
+                                if(newPort < 0 || newPort > 65535) {
+                                    // invalid port
+                                    saveValues(serverPreferences, newAdress, oldPort);
+                                } else {
+                                    //valid port
+                                    saveValues(serverPreferences, newAdress, newPort);
+                                }
+                            } catch (Exception e) {
+                                // invalid port
+                                saveValues(serverPreferences, newAdress, oldPort);
+                            }
+
+                            connectToServer();
+                        }
+                    })
+                    .setNegativeButton(R.string.dialog_serversettings_negative, null)
+                    .show();
+
+            SharedPreferences serverPreferences = getSharedPreferences(getString(R.string.prefs_serverinformation), MODE_PRIVATE);
+
+            ((EditText) mSettingsDialog.findViewById(R.id.layout_dialog_serversettings_serverAdressTextField)).setText(serverPreferences.getString(getString(R.string.prefs_serverinformation_serveradress), getString(R.string.serverinformation_defaultadress)));
+            ((EditText) mSettingsDialog.findViewById(R.id.layout_dialog_serversettings_serverPortTextField)).setText("" + serverPreferences.getInt(getString(R.string.prefs_serverinformation_serverport), getResources().getInteger(R.integer.serverinformation_defaultport)));
+        }
+
+        private void saveValues(SharedPreferences prefs, String adress, int port) {
+            prefs
+                    .edit()
+                    .putString(getString(R.string.prefs_serverinformation_serveradress), adress)
+                    .putInt(getString(R.string.prefs_serverinformation_serverport), port)
+                    .apply();
+        }
+    };
+
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
 //      Handle action bar item clicks here. The action bar will
@@ -962,6 +1032,8 @@ public class MainActivity extends AppCompatActivity{
             return true;
         } else if(id == R.id.action_deletemessages) {
             deleteMessages();
+        } else if(id == R.id.action_serversettings) {
+            changeServerSettings.run();
         }
 
         return super.onOptionsItemSelected(item);

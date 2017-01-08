@@ -18,7 +18,7 @@
 
     <string name="app_name">Messaging</string>
 
-    <string name="message_sendTextField_hint">Ihre Nachrich eingeben</string>
+    <string name="message_sendTextField_hint">Ihre Nachricht eingeben</string>
 
     <string name="defaultUserName">Unbekannter Nutzer</string>
     <string name="settings_savesettings">Speichern</string>
@@ -28,11 +28,15 @@
     <string name="settings_limitsavedmessageshint">Anzahl gespeicherter Nachrichten begrenzen?</string>
     <string name="settings_limitsavedmessagesamountcaption">Höchstanzahl an gespeicherten Nachrichten</string>
     <string name="limitsavedmessagesamount_template">%1$1d</string>
+    <string name="settingsmessage_invalidadminpassword">Falsches Passwort.</string>
+    <string name="splashscreen_subtitle">Ein Schulprojekt von Jeremy und Jonny.</string>
 
     <string name="action_pingserver">Server anpingen</string>
     <string name="action_showsettings">Einstellungen</string>
     <string name="action_users">Nutzerliste</string>
     <string name="action_adminmessage">Admin-Nachricht senden</string>
+    <string name="action_deletemessages">Nachrichten löschen</string>
+    <string name="action_serversettings">Servereinstellungen</string>
 
     <string name="pingresult_connected">Serververbindung ist hergestellt.</string>
     <string name="pingresult_timedout">Die Verbindung mit dem Server ist ausgefallen.</string>
@@ -43,6 +47,10 @@
     <string name="internetmessage_serverdown">Der Server scheint ausgefallen zu sein…</string>
     <string name="internetmessage_serverdown_reconnect">Verbinden</string>
     <string name="internetmessage_serverdisconnect">Verbindung zum Server wurde getrennt.</string>
+
+
+
+
 
 
 
@@ -70,7 +78,13 @@
     <string name="dialog_adminrights_title">Admin-Rechte benötigt</string>
     <string name="dialog_adminrights_positivebutton">Eingeben</string>
     <string name="dialog_adminrights_negativebutton">Abbrechen</string>
-    <string name="dialog_adminrights_passwordhint">Admin Passwort</string>
-    <string name="settingsmessage_invalidadminpassword">Falsches Passwort.</string>
+    <string name="dialog_adminrights_passwordhint">Adminpasswort</string>
+
+    <string name="dialog_serversettings_caption">Servereinstellungen</string>
+    <string name="dialog_serversettings_positive">Anwenden</string>
+    <string name="dialog_serversettings_negative">Verwerfen</string>
+    <string name="dialog_serversettings_warning">WARNUNG: Sie sollten diese Werte ausschließlich verändern, falls Sie wissen, was Sie tun, oder von jemandem, der weiß, was er tut, dazu angewiesen wurden.\nEine Veränderung dieser Werte ist irreversibel, und könnte die Applikation nutzlos machen.</string>
+    <string name="dialog_serversettings_adresshint">Server IP / Adresse</string>
+    <string name="dialog_serversettings_porthint">Server Port</string>
 
 </resources>

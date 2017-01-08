@@ -49,18 +49,24 @@
         app:showAsAction="ifRoom"/>
 
     <item
-        android:id="@+id/action_settings"
+        android:id="@+id/action_deletemessages"
         android:orderInCategory="103"
+        android:icon="@drawable/ic_vector_deletemessages"
+        android:title="@string/action_deletemessages"
+        app:showAsAction="ifRoom"/>
+
+    <item
+        android:id="@+id/action_settings"
+        android:orderInCategory="104"
         android:icon="@drawable/ic_vector_showsettings"
         android:title="@string/action_showsettings"
         app:showAsAction="ifRoom"/>
 
     <item
-        android:id="@+id/action_deletemessages"
-        android:orderInCategory="104"
-        android:icon="@drawable/ic_vector_deletemessages"
-        android:title="@string/delete_messages"
+        android:id="@+id/action_serversettings"
+        android:orderInCategory="105"
+        android:icon="@drawable/ic_vector_serverinformation"
+        android:title="@string/action_serversettings"
         app:showAsAction="ifRoom"/>
-
 
 </menu>
