@@ -101,7 +101,7 @@ public class MessagesMain extends JFrame implements Context {
     private MessageSender.PingListener pingListener = (connectionDetected) -> {
 //      Wir zeigen dem User, ob der Ping erfolgreich war
         if(connectionDetected){
-            new Snackbar.SnackbarFactory(MessagesMain.this, getString(R.string.pingmessage_connected), Snackbar.LENGTH_LONG)
+            new Snackbar.Builder(MessagesMain.this, getString(R.string.pingmessage_connected), Snackbar.LENGTH_LONG)
                     .setBackgroundColor(getIntColor(R.color.connection_restored))
                     .setFontColor(getIntColor(R.color.connection_font))
                     .setPosition(SNACKBARPOSITION)
@@ -109,7 +109,7 @@ public class MessagesMain extends JFrame implements Context {
                     .create()
                     .show();
         }else{
-            new Snackbar.SnackbarFactory(MessagesMain.this, getString(R.string.pingmessage_disconnected), Snackbar.LENGTH_LONG)
+            new Snackbar.Builder(MessagesMain.this, getString(R.string.pingmessage_disconnected), Snackbar.LENGTH_LONG)
                     .setBackgroundColor(getIntColor(R.color.connection_lost))
                     .setFontColor(getIntColor(R.color.connection_font))
                     .setPosition(SNACKBARPOSITION)
@@ -485,7 +485,7 @@ public class MessagesMain extends JFrame implements Context {
      * Außerdem wird ihm die Möglichkeit geboten zu versuchen sich mit dem Server zu verbinden.
      */
     private void showDisconnectedErrorMessage(){
-        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_disconnected), Snackbar.LENGTH_LONG)
+        new Snackbar.Builder(this, getString(R.string.errormessage_disconnected), Snackbar.LENGTH_LONG)
                 .setBackgroundColor(getIntColor(R.color.connection_lost))
                 .setFontColor(getIntColor(R.color.connection_font))
                 .setActionFontColor(getIntColor(R.color.connection_actionfont))
@@ -500,7 +500,7 @@ public class MessagesMain extends JFrame implements Context {
      * Diese Methode zeigt dem User, dass sein eingegebener Name nicht gültig ist
      */
     private void showInvalidUserNameErrorMessage(){
-        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_invalidusername), Snackbar.LENGTH_LONG)
+        new Snackbar.Builder(this, getString(R.string.errormessage_invalidusername), Snackbar.LENGTH_LONG)
                 .setBackgroundColor(getIntColor(R.color.connection_lost))
                 .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)
@@ -513,7 +513,7 @@ public class MessagesMain extends JFrame implements Context {
      * Diese Methode zeigt dem User an, dass er das falsche Passwort eingegeben hat.
      */
     private void showInvalidAdminPasswordMessage(){
-        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_invalidpassword), Snackbar.LENGTH_LONG)
+        new Snackbar.Builder(this, getString(R.string.errormessage_invalidpassword), Snackbar.LENGTH_LONG)
                 .setBackgroundColor(getIntColor(R.color.errormessage))
                 .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)
@@ -635,7 +635,7 @@ public class MessagesMain extends JFrame implements Context {
      * Außerdem wird ihm die Möglichkeit geboten zu versuchen sich mit dem Server zu verbinden.
      */
     private void showDisconnectMessage() {
-        new Snackbar.SnackbarFactory(this, getString(R.string.errormessage_disconnect), Snackbar.LENGTH_LONG)
+        new Snackbar.Builder(this, getString(R.string.errormessage_disconnect), Snackbar.LENGTH_LONG)
                 .setBackgroundColor(getIntColor(R.color.errormessage))
                 .setFontColor(getIntColor(R.color.connection_font))
                 .setRelativeTo(this)

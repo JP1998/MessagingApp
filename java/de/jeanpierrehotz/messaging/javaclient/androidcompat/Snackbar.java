@@ -26,17 +26,17 @@ import java.awt.event.ActionListener;
  * The message will disappear after a certain time, or (if explicitly said) persist until dismissed manually, and is for single-use only
  * (meaning that its original state is not restorable).<br>
  * The look of the Snackbar is (unlike the Android-counterpart) easily modifyable in the process of creation.<br>
- * A Snackbar can be created by using the {@link de.jeanpierrehotz.messaging.javaclient.androidcompat.Snackbar.SnackbarFactory}-class,
- * and calling the method {@link SnackbarFactory#create()} on a created SnackbarFactory.<br>
+ * A Snackbar can be created by using the {@link Builder}-class,
+ * and calling the method {@link Builder#create()} on a created Builder.<br>
  * There are 9 different locations a Snackbar may appear, which are each represented by a integer-constant.<br>
  * There are also three durations pre-defined, although you can give any duration (in ms) between 0 and {@link #MAX_DURATION}.<br>
- * When using a setXColor(int)-method of the SnackbarFactory you'll have to be faced with following color-definition:<br>
+ * When using a setXColor(int)-method of the Builder you'll have to be faced with following color-definition:<br>
  * 0xXX<span style="color: #FF0000;">RR</span><span style="color: #00FF00;">GG</span><span style="color: #0000FF;">BB</span> -
  * This represents an integer (as in Java Standard) represented in hexadecimal. the last 6 digits represent a color-channel,
  * two digits for each, which makes 256 values per channel. The two leading digits will be ignored.<br>
  * To create and show a fully customized Snackbar, do as follows:<br>
  * <pre><code>
- <span style="color: #000080;">new</span> Snackbar.SnackbarFactory(getMainFrame(), <span style="color: #007700;">"A little message"</span>, <span style="color: #0000FF;">10000</span>)
+ <span style="color: #000080;">new</span> Snackbar.Builder(getMainFrame(), <span style="color: #007700;">"A little message"</span>, <span style="color: #0000FF;">10000</span>)
         .setBackgroundColor(<span style="color: #0000FF;">0xFF0000</span>)
         .setAction(<span style="color: #007700;">"A little action"</span>, e -> System.out.println(<span style="color: #007700;">"Action has performed"</span>))
         .setActionFontColor(<span style="color: #0000FF;">0x00FF00</span>)
@@ -131,7 +131,7 @@ public class Snackbar {
         }
     }
 
-    public static class SnackbarFactory{
+    public static class Builder {
 
         private String message;
         private Component owner;
@@ -149,7 +149,7 @@ public class Snackbar {
 
         private int position;
 
-        public SnackbarFactory(Component owner, String msg, int duration){
+        public Builder(Component owner, String msg, int duration){
             if((duration < 0 || duration > MAX_DURATION) && duration != LENGTH_INDEFINITE){
                 throw new IllegalArgumentException("Duration is out of bounds!");
             }
@@ -171,22 +171,22 @@ public class Snackbar {
             this.position = POSITION_BOTTOM_RIGHT;
         }
 
-        public SnackbarFactory setBackgroundColor(int col) {
+        public Builder setBackgroundColor(int col) {
             this.backgroundColor = col;
             return this;
         }
 
-        public SnackbarFactory setFontColor(int col) {
+        public Builder setFontColor(int col) {
             this.fontColor = col;
             return this;
         }
 
-        public SnackbarFactory setActionFontColor(int col) {
+        public Builder setActionFontColor(int col) {
             this.actionFontColor = col;
             return this;
         }
 
-        public SnackbarFactory setPosition(int pos) {
+        public Builder setPosition(int pos) {
             if(pos < 1 || pos > 9){
                 throw new IllegalArgumentException("Parameter pos must be 1 <= pos <= 9; See Documentation!");
             }
@@ -195,12 +195,12 @@ public class Snackbar {
             return this;
         }
 
-        public SnackbarFactory setRelativeTo(Window w){
+        public Builder setRelativeTo(Window w){
             this.relativeTo = w;
             return this;
         }
 
-        public SnackbarFactory setAction(String actionText, ActionListener listener) {
+        public Builder setAction(String actionText, ActionListener listener) {
             this.actionAdded = true;
             this.actionText = actionText;
             this.actionListener = listener;
